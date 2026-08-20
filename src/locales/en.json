@@ -1,0 +1,37 @@
+{
+  "app": {
+    "title": "EduHub",
+    "tagline": "Empowering Education"
+  },
+  "search": {
+    "placeholder": "Search lessons...",
+    "offline_placeholder": "Search cached lessons..."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "unread": "{count} unread",
+    "empty": "No notifications available",
+    "mark_all_read": "Mark all as read",
+    "new_lesson": "New mathematics lesson available",
+    "assignment_graded": "Your assignment was graded",
+    "live_session": "Live session starting soon",
+    "time_10min": "10 mins ago",
+    "time_2hr": "2 hours ago",
+    "time_5hr": "5 hours ago"
+  },
+  "profile": {
+    "name": "Alex Johnson",
+    "alt": "User",
+    "guest": "Guest",
+    "no_email": "No email available",
+    "student": "Student",
+    "offline": "Offline",
+    "link": "Profile"
+  },
+  "settings": {
+    "link": "Settings"
+  },
+  "logout": {
+    "link": "Logout"
+  }
+}
