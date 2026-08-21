@@ -1,8 +1,3 @@
-# hack-synapse-2026-mits-du-gwalior-madhya-pradesh-novaminds
-Hackathon team repository for NovaMinds - [hackindia-team:hack-synapse-2026-mits-du-gwalior-madhya-pradesh:novaminds]
-
-
-
 # PROJECT_ARCHITECTURE
 
 ## 1. Project Overview
@@ -214,9 +209,36 @@ Why embeddings and vector retrieval help:
 - Vector search retrieves the most relevant chunks for a query.
 - Retrieval gives the model grounded context from course material, improving relevance for academic outputs.
 
+## 9. RAG Architecture
 
+RAG flow:
+1. Teacher uploads educational content.
+2. Content is extracted.
+3. Content is split into chunks.
+4. Embeddings are generated.
+5. Embeddings are stored in a vector database.
+6. Student asks a question or requests learning support.
+7. Relevant chunks are retrieved.
+8. Retrieved context is sent to the LLM.
+9. LLM returns a context-aware response.
 
-## 9. Personalized Learning Architecture
+```mermaid
+flowchart TD
+    U[Teacher Upload] --> E[Extract Text]
+    E --> C[Chunk Content]
+    C --> EMB[Create Embeddings]
+    EMB --> V[(Vector Database)]
+
+    Q[Student Query] --> R[Retrieve Relevant Chunks]
+    V --> R
+    R --> L[LLM with Retrieved Context]
+    L --> A[Context-Aware Answer]
+```
+
+RAG benefit:
+- The AI answers using course-provided context instead of relying only on broad pretraining knowledge.
+
+## 10. Personalized Learning Architecture
 
 Personalization should be signal-driven, not guess-driven.
 
@@ -237,7 +259,7 @@ flowchart TD
 Design principle:
 - Recommendations are generated from measurable outcomes such as attempts, scores, and topic mastery trends.
 
-## 10. Offline-First Architecture
+## 11. Offline-First Architecture
 
 Key elements:
 - Service worker for caching and background sync orchestration
@@ -261,7 +283,39 @@ flowchart TD
     API --> DB[(Database)]
 ```
 
-## 11. Conceptual Database Model
+## 12. Data Flow
+
+### Standard LMS Data Flow
+
+User
+↓
+Frontend
+↓
+API
+↓
+Authentication
+↓
+Business Logic
+↓
+Database
+↓
+Response
+↓
+Frontend
+
+### AI Data Flow
+
+Content / Performance Data
+↓
+AI Processing
+↓
+Analysis / Generation
+↓
+Learning Output
+↓
+Student / Teacher
+
+## 13. Conceptual Database Model
 
 This is a conceptual data model, not a published physical schema.
 
@@ -285,7 +339,7 @@ High-level relationship view:
 - Attempts and submissions feed performance records.
 - Recommendations are generated from performance and topic mapping.
 
-## 12. Technology Stack
+## 14. Technology Stack
 
 No implementation stack files are present in the current repository snapshot. The table below is the planned stack direction.
 
@@ -300,7 +354,7 @@ No implementation stack files are present in the current repository snapshot. Th
 | AI generation | LLM (fast + capable model tiers) | Content generation, analysis, and recommendations |
 | Offline | Service Worker + IndexedDB | Local caching, offline activity storage, background sync |
 
-## 13. Technical Challenges and Solutions
+## 15. Technical Challenges and Solutions
 
 | Challenge | Why it happens | Proposed solution | Expected result |
 |------|------|------|------|
@@ -314,7 +368,7 @@ No implementation stack files are present in the current repository snapshot. Th
 | Offline data synchronization | Conflicts and delayed writes | Sync queue, idempotent writes, reconciliation rules | Improved reliability after reconnect |
 | Data consistency | Online and offline updates may diverge | Versioning and conflict-resolution policy | Consistent learner records |
 
-## 14. AI Safety and Reliability
+## 16. AI Safety and Reliability
 
 - Ground AI responses in uploaded educational content via retrieval.
 - Use RAG-based context injection for academic answers.
@@ -324,7 +378,7 @@ No implementation stack files are present in the current repository snapshot. Th
 - Return safe fallback responses when context is insufficient.
 - Protect student data through access controls and secure handling.
 
-## 15. Scalability
+## 17. Scalability
 
 The architecture can scale through:
 - Institution-level multi-tenant separation
@@ -335,7 +389,7 @@ The architecture can scale through:
 - Object/content storage expansion for documents and media
 - Queue-based sync processing for high offline event volume
 
-## 16. Security
+## 18. Security
 
 Security design targets:
 - Authentication and session/token management
@@ -350,7 +404,7 @@ Security design targets:
 Implementation note:
 - Security architecture is defined, but repository-level implementation artifacts are not currently present.
 
-## 17. Implementation Status
+## 19. Implementation Status
  
 *Status is based only on this repository snapshot.*
  
@@ -372,7 +426,7 @@ Implementation note:
 - Sync queue implementation
 ---
 
-## 18. Future Scope
+## 20. Future Scope
 
 - Advanced AI tutor for guided concept remediation
 - Multilingual learning support
@@ -384,7 +438,7 @@ Implementation note:
 
 All items above are future scope and not claimed as implemented in this repository snapshot.
 
-## 19. Expected Impact
+## 21. Expected Impact
 
 ### Students
 - Better continuity of learning in unstable network conditions
@@ -401,7 +455,7 @@ All items above are future scope and not claimed as implemented in this reposito
 - Unified learning ecosystem design
 - Better support planning for low-connectivity education contexts
 
-## 20. Final Summary
+## 22. Final Summary
 
 This project targets a real intersection of educational constraints:
 
