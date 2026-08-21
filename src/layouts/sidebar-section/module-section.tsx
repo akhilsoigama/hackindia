@@ -1,7 +1,8 @@
-import { AnimatePresence, motion } from "framer-motion";
 import NavigationLink from './nevigation-link';
 import useTranslateWithAtom from '../../action/translate';
 import { useEffect, useState } from 'react';
+import SidebarSection from './sidebar-section';
+import { FilteredModule, FilteredSidebarLink } from '../../types/sidebar';
 
 // Translated component
 const Translated = ({ text }: { text: string }) => {
@@ -25,7 +26,7 @@ const Translated = ({ text }: { text: string }) => {
 };
 
 interface ModuleSectionProps {
-  module: any;
+  module: FilteredModule;
   moduleIndex: number;
   isSidebarExpanded: boolean;
   expandedLink: string | null;
@@ -48,45 +49,26 @@ const ModuleSection = ({
   currentPath
 }: ModuleSectionProps) => {
   return (
-    <motion.div
-      key={module.moduleName}
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: moduleIndex * 0.15, duration: 0.4 }}
-      className="group/module"
+    <SidebarSection
+      title={<Translated text={module.moduleName} />}
+      isSidebarExpanded={isSidebarExpanded}
     >
-      <AnimatePresence>
-        {isSidebarExpanded && (
-          <motion.h3
-            className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-3"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Translated text={module.moduleName} />
-          </motion.h3>
-        )}
-      </AnimatePresence>
-
-      <div className="space-y-1">
-        {module.links.map((link: any, linkIndex: any) => (
-          <NavigationLink
-            key={link.label}
-            link={link}
-            moduleIndex={moduleIndex}
-            linkIndex={linkIndex}
-            isSidebarExpanded={isSidebarExpanded}
-            expandedLink={expandedLink}
-            expandedSubLink={expandedSubLink}
-            toggleLink={toggleLink}
-            toggleSubLink={toggleSubLink}
-            handleLinkClick={handleLinkClick}
-            currentPath={currentPath}
-          />
-        ))}
-      </div>
-    </motion.div>
+      {module.links.map((link: FilteredSidebarLink, linkIndex: number) => (
+        <NavigationLink
+          key={link.label}
+          link={link}
+          moduleIndex={moduleIndex}
+          linkIndex={linkIndex}
+          isSidebarExpanded={isSidebarExpanded}
+          expandedLink={expandedLink}
+          expandedSubLink={expandedSubLink}
+          toggleLink={toggleLink}
+          toggleSubLink={toggleSubLink}
+          handleLinkClick={handleLinkClick}
+          currentPath={currentPath}
+        />
+      ))}
+    </SidebarSection>
   );
 };
 

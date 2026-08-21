@@ -1,15 +1,6 @@
 import React from 'react';
 import { useFormContext, Controller, RegisterOptions } from 'react-hook-form';
-import {
-  Checkbox,
-  FormControlLabel,
-  FormControl,
-  FormHelperText,
-  FormGroup,
-  Typography,
-  Box,
-} from '@mui/material';
-import { CheckBox as CheckBoxIcon, CheckBoxOutlineBlank } from '@mui/icons-material';
+import { NeonCheckbox } from '../ui/animated-check-box';
 
 interface RHFCheckboxProps {
   name: string;
@@ -19,14 +10,16 @@ interface RHFCheckboxProps {
   className?: string;
   validation?: RegisterOptions;
   description?: string;
-  // MUI specific props
   size?: 'small' | 'medium';
   color?: 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
   placement?: 'end' | 'start' | 'top' | 'bottom';
-  // For use outside of React Hook Form context
   checked?: boolean;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
+
+
+import { useTheme } from '@/theme/AppThemeProvider';
+import { Translated } from '../common/translator/translator';
 
 const RHFCheckbox: React.FC<RHFCheckboxProps> = ({
   name,
@@ -43,45 +36,68 @@ const RHFCheckbox: React.FC<RHFCheckboxProps> = ({
   onChange: externalOnChange,
   ...props
 }) => {
+  const { mode } = useTheme();
+  const isDark = mode === 'dark';
   const formContext = useFormContext();
-  
-  // If we're using this outside of RHF context, use the controlled component approach
+
+  const labelClass = [
+    isDark ? 'text-slate-100' : 'text-slate-900',
+    size === 'small' ? 'text-sm' : 'text-base',
+    'font-medium leading-snug',
+    disabled ? 'opacity-70' : '',
+  ].join(' ');
+  const descClass = [
+    isDark ? 'text-slate-400' : 'text-slate-500',
+    'text-xs mt-1 leading-relaxed',
+  ].join(' ');
+  const errorClass = [
+    isDark ? 'text-red-400' : 'text-red-600',
+    'text-xs mt-1 font-medium leading-relaxed',
+  ].join(' ');
+  const boxBg = isDark ? 'bg-black/80' : 'bg-white';
+  const requiredColorClass = {
+    primary: 'text-blue-500',
+    secondary: 'text-violet-500',
+    error: 'text-red-500',
+    info: 'text-cyan-500',
+    success: 'text-green-500',
+    warning: 'text-amber-500',
+  }[color];
+  const placementClass = {
+    end: 'flex-row',
+    start: 'flex-row-reverse justify-end',
+    top: 'flex-col items-start',
+    bottom: 'flex-col-reverse items-start',
+  }[placement];
+
+  const renderLabel = () => {
+    const labelContent = typeof label === 'string' ? <Translated text={label} /> : label;
+    return (
+      <span className={labelClass}>
+        {labelContent}
+        {required && <span className={`ml-1 ${requiredColorClass}`}>*</span>}
+      </span>
+    );
+  };
+
   if (!formContext || externalOnChange) {
     return (
-      <FormControl component="fieldset" className={className}>
-        <FormGroup>
-          <FormControlLabel
-            control={
-              <Checkbox
-                name={name}
-                checked={externalChecked || false}
-                onChange={externalOnChange}
-                disabled={disabled}
-                size={size}
-                color={color}
-                icon={<CheckBoxOutlineBlank />}
-                checkedIcon={<CheckBoxIcon />}
-                {...props}
-              />
-            }
-            label={
-              <Box>
-                <Typography variant="body1" component="span">
-                  {label}
-                  {required && <span className="text-red-500 ml-1">*</span>}
-                </Typography>
-                {description && (
-                  <Typography variant="caption" color="textSecondary" display="block">
-                    {description}
-                  </Typography>
-                )}
-              </Box>
-            }
-            labelPlacement={placement}
+      <div className={`flex flex-col gap-3 ${className}`}>
+        <div className={`flex items-center gap-3 ${placementClass}`}>
+          <NeonCheckbox
+            name={name}
+            checked={externalChecked || false}
+            onChange={externalOnChange}
             disabled={disabled}
+            label={renderLabel()}
+            boxBg={boxBg}
+            {...props}
           />
-        </FormGroup>
-      </FormControl>
+        </div>
+        {description && (
+          <div className={descClass}><Translated text={description} /></div>
+        )}
+      </div>
     );
   }
 
@@ -93,70 +109,35 @@ const RHFCheckbox: React.FC<RHFCheckboxProps> = ({
   const error = errors[name];
 
   return (
-    <FormControl 
-      component="fieldset" 
-      error={!!error}
-      disabled={disabled}
-      className={className}
-      fullWidth
-    >
-      <Controller
-        name={name}
-        control={control}
-        rules={{ 
-          required: required ? 'This field is required' : false, 
-          ...validation 
-        }}
-        render={({ field }) => (
-          <FormGroup>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  {...field}
-                  checked={field.value || false}
-                  onChange={(e) => field.onChange(e.target.checked)}
-                  disabled={disabled}
-                  size={size}
-                  color={error ? 'error' : color}
-                  icon={<CheckBoxOutlineBlank />}
-                  checkedIcon={<CheckBoxIcon />}
-                  {...props}
-                />
-              }
-              label={
-                <Box>
-                  <Typography 
-                    variant="body1" 
-                    component="span"
-                    color={error ? 'error' : 'textPrimary'}
-                  >
-                    {label}
-                    {required && <span className="text-red-500 ml-1">*</span>}
-                  </Typography>
-                  {description && (
-                    <Typography 
-                      variant="caption" 
-                      color={error ? 'error' : 'textSecondary'} 
-                      display="block"
-                    >
-                      {description}
-                    </Typography>
-                  )}
-                </Box>
-              }
-              labelPlacement={placement}
+    <div className={`flex flex-col gap-3 ${className}`}>
+      <div className={`flex items-center gap-3 ${placementClass}`}>
+        <Controller
+          name={name}
+          control={control}
+          rules={{
+            required: required ? 'This field is required' : false,
+            ...validation,
+          }}
+          render={({ field }) => (
+            <NeonCheckbox
+              {...field}
+              checked={field.value || false}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.checked)}
               disabled={disabled}
+              label={renderLabel()}
+              boxBg={boxBg}
+              {...props}
             />
-          </FormGroup>
-        )}
-      />
-      
-      {error && (
-        <FormHelperText error>
-          {error.message as string}
-        </FormHelperText>
+          )}
+        />
+      </div>
+      {description && (
+        <div className={descClass}><Translated text={description} /></div>
       )}
-    </FormControl>
+      {error && (
+        <div className={errorClass}>{error.message as string}</div>
+      )}
+    </div>
   );
 };
 

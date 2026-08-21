@@ -1,4 +1,6 @@
-import { atom } from "jotai";
-import { IUserRolePermissionItem } from "../types/Roles";
-
-export const rolePermissionsAtom = atom<IUserRolePermissionItem[]>([]);
+export {
+	rolePermissionsAtom,
+	rolePermissionItemsAtom,
+	rolePermissionCountAtom,
+	rolePermissionMapAtom,
+} from '../store/atoms/role-permission.atoms';

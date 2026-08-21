@@ -22,6 +22,7 @@ import {
     FaTh,
     FaTimes
 } from 'react-icons/fa';
+import { Translated } from '../../../components/common/translator/translator';
 
 // Define the ReadingMaterial interface
 interface ReadingMaterial {
@@ -300,15 +301,15 @@ const ReadingList = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-screen mx-auto">
                 {/* Header */}
                 <div className="mb-6 md:mb-8">
                     <h1 className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center">
                         <FaBook className="mr-3 text-indigo-600" />
-                        Reading Materials
+                        <Translated text="Reading Materials" />
                     </h1>
                     <p className="text-gray-600 mt-1 md:mt-2 text-sm md:text-base">
-                        Browse and access all your reading materials
+                        <Translated text="Browse and access all your reading materials" />
                     </p>
                 </div>
 
@@ -324,7 +325,7 @@ const ReadingList = () => {
                             <FaBook className="text-indigo-600 text-xl" />
                         </div>
                         <div>
-                            <p className="text-gray-600 text-sm">Total Readings</p>
+                            <p className="text-gray-600 text-sm"><Translated text="Total Readings" /></p>
                             <p className="text-xl md:text-2xl font-bold">{readingMaterials.length}</p>
                         </div>
                     </div>
@@ -334,7 +335,7 @@ const ReadingList = () => {
                             <FaChalkboardTeacher className="text-green-600 text-xl" />
                         </div>
                         <div>
-                            <p className="text-gray-600 text-sm">Published</p>
+                            <p className="text-gray-600 text-sm"><Translated text="Published" /></p>
                             <p className="text-xl md:text-2xl font-bold">{readingMaterials.filter(l => l.status === 'published').length}</p>
                         </div>
                     </div>
@@ -354,7 +355,7 @@ const ReadingList = () => {
                             <FaUsers className="text-blue-600 text-xl" />
                         </div>
                         <div>
-                            <p className="text-gray-600 text-sm">Total Taught</p>
+                            <p className="text-gray-600 text-sm"><Translated text="Total Taught" /></p>
                             <p className="text-xl md:text-2xl font-bold">{readingMaterials.reduce((acc, reading) => acc + reading.timesTaught, 0)}</p>
                         </div>
                     </div>
@@ -368,7 +369,7 @@ const ReadingList = () => {
                     className="bg-white rounded-xl shadow-md p-4 md:p-6 mb-6 border border-gray-100"
                 >
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="relative flex-grow">
+                        <div className="relative grow">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <FaSearch className="text-gray-400" />
                             </div>
@@ -387,7 +388,7 @@ const ReadingList = () => {
                                 className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
                             >
                                 <FaFilter />
-                                Filters
+                                <Translated text="Filters" />
                                 {showFilters && <FaTimes className="ml-1" />}
                             </button>
 
@@ -419,43 +420,43 @@ const ReadingList = () => {
                                 className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4"
                             >
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1"><Translated text="Status" /></label>
                                     <select
                                         value={statusFilter}
                                         onChange={(e) => setStatusFilter(e.target.value)}
                                         className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none"
                                     >
-                                        <option value="all">All Statuses</option>
-                                        <option value="draft">Draft</option>
-                                        <option value="published">Published</option>
-                                        <option value="archived">Archived</option>
+                                        <option value="all"><Translated text="All Statuses" /></option>
+                                        <option value="draft"><Translated text="Draft" /></option>
+                                        <option value="published"><Translated text="Published" /></option>
+                                        <option value="archived"><Translated text="Archived" /></option>
                                     </select>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1"><Translated text="Subject" /></label>
                                     <select
                                         value={subjectFilter}
                                         onChange={(e) => setSubjectFilter(e.target.value)}
                                         className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none"
                                     >
-                                        <option value="all">All Subjects</option>
+                                        <option value="all"><Translated text="All Subjects" /></option>
                                         {subjects.map(subject => (
-                                            <option key={subject} value={subject}>{subject}</option>
+                                            <option key={subject} value={subject}><Translated text={subject} /></option>
                                         ))}
                                     </select>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Grade Level</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1"><Translated text="Grade Level" /></label>
                                     <select
                                         value={gradeFilter}
                                         onChange={(e) => setGradeFilter(e.target.value)}
                                         className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none"
                                     >
-                                        <option value="all">All Grades</option>
+                                        <option value="all"><Translated text="All Grades" /></option>
                                         {gradeLevels.map(level => (
-                                            <option key={level} value={level}>{level}</option>
+                                            <option key={level} value={level}><Translated text={level} /></option>
                                         ))}
                                     </select>
                                 </div>
@@ -468,8 +469,8 @@ const ReadingList = () => {
                 {filteredReadings.length === 0 ? (
                     <div className="bg-white rounded-xl shadow-md p-8 text-center text-gray-500 border border-gray-100">
                         <FaSearch className="mx-auto text-4xl mb-4 text-gray-300" />
-                        <p className="text-lg">No reading materials found</p>
-                        <p className="mt-2">Try adjusting your search or filters</p>
+                        <p className="text-lg"><Translated text="No reading materials found" /></p>
+                        <p className="mt-2"><Translated text="Try adjusting your search or filters" /></p>
                     </div>
                 ) : viewMode === 'grid' ? (
                     <motion.div
@@ -491,7 +492,7 @@ const ReadingList = () => {
                                         href={reading.resources.find(r => r.type === 'pdf')?.url} 
                                         target="_blank" 
                                         rel="noopener noreferrer" 
-                                        className="relative flex-grow flex flex-col items-center justify-center p-6 bg-gray-100 hover:bg-gray-200 transition-colors h-48 text-center"
+                                        className="relative grow-0 flex flex-col items-center justify-center p-6 bg-gray-100 hover:bg-gray-200 transition-colors h-48 text-center"
                                     >
                                         <FaFilePdf className="text-5xl text-red-500 mb-3" />
                                         <p className="font-semibold text-gray-700 line-clamp-3">{reading.title}</p>
@@ -502,29 +503,29 @@ const ReadingList = () => {
                                         </div>
                                     </a>
                                     
-                                    <div className="p-5 flex-shrink-0">
+                                    <div className="p-5 shrink-0">
                                         <div className="flex justify-between items-start mb-3">
                                             <span className="bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                                                {reading.subject}
+                                                <Translated text={reading.subject} />
                                             </span>
                                             <span className="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                                                {reading.gradeLevel}
+                                                <Translated text={reading.gradeLevel} />
                                             </span>
                                         </div>
                                         
                                         
                                         <div className="flex items-center text-sm text-gray-500 mb-4">
                                             <FaChalkboardTeacher className="mr-1" />
-                                            <span>by {reading.author}</span>
+                                            <span><Translated text="by" /> {reading.author}</span>
                                             <span className="mx-2">•</span>
                                             <FaClock className="mr-1" />
-                                            <span>{reading.duration}</span>
+                                            <span><Translated text={reading.duration} /></span>
                                         </div>
                                         
                                         <div className="flex justify-between items-center mb-4">
                                             <div className="flex items-center">
                                                 <FaUsers className="mr-1 text-gray-400" />
-                                                <span className="text-sm text-gray-600">Taught {reading.timesTaught} times</span>
+                                                <span className="text-sm text-gray-600"><Translated text="Taught" /> {reading.timesTaught} times</span>
                                             </div>
                                             {renderRating(reading.rating)}
                                         </div>
@@ -537,7 +538,7 @@ const ReadingList = () => {
                                                 onClick={() => toggleReadingExpansion(reading.id)}
                                             >
                                                 <FaEye className="text-sm" />
-                                                View Details
+                                                <Translated text="View Details" />
                                             </motion.button>
                                             
                                             <div className="flex gap-2">
@@ -545,7 +546,7 @@ const ReadingList = () => {
                                                     whileHover={{ scale: 1.1 }}
                                                     whileTap={{ scale: 0.9 }}
                                                     className="p-2 text-gray-400 rounded-full cursor-not-allowed"
-                                                    title="Edit Reading (disabled)"
+                                                    title={`${<Translated text="Edit Reading (disabled)" />}`}
                                                     disabled
                                                 >
                                                     <FaEdit />
@@ -555,7 +556,7 @@ const ReadingList = () => {
                                                     whileHover={{ scale: 1.1 }}
                                                     whileTap={{ scale: 0.9 }}
                                                     className="p-2 text-gray-400 rounded-full cursor-not-allowed"
-                                                    title="Delete Reading (disabled)"
+                                                    title={`${<Translated text="Delete Reading (disabled)" />}`}
                                                     disabled
                                                 >
                                                     <FaTrash />
@@ -575,7 +576,7 @@ const ReadingList = () => {
                                                 className="bg-gray-50 p-5 border-t border-gray-200"
                                             >
                                                 <div className="flex justify-between items-center mb-4">
-                                                    <h3 className="font-medium text-gray-800">Reading Details</h3>
+                                                    <h3 className="font-medium text-gray-800"><Translated text="Reading Details" /></h3>
                                                     <button 
                                                         onClick={() => setExpandedReading(null)}
                                                         className="text-gray-400 hover:text-gray-600"
@@ -586,21 +587,21 @@ const ReadingList = () => {
 
                                                 <div className="grid grid-cols-1 gap-4">
                                                     <div>
-                                                        <h4 className="font-medium text-gray-700 mb-2">Learning Objectives</h4>
+                                                        <h4 className="font-medium text-gray-700 mb-2"><Translated text="Learning Objectives" /></h4>
                                                         <ul className="list-disc pl-5 space-y-1">
                                                             {reading.objectives.map((obj, i) => (
-                                                                <li key={i} className="text-sm text-gray-600">{obj}</li>
+                                                                <li key={i} className="text-sm text-gray-600"><Translated text={obj} /></li>
                                                             ))}
                                                         </ul>
                                                     </div>
 
                                                     <div>
-                                                        <h4 className="font-medium text-gray-700 mb-2">Attached Files</h4>
+                                                        <h4 className="font-medium text-gray-700 mb-2"><Translated text="Attached Files" /></h4>
                                                         <div className="space-y-2">
                                                             {reading.resources.map((resource, i) => (
                                                                 <div key={i} className="flex items-center bg-white p-2 rounded-lg border">
                                                                     <span className="mr-2">{getResourceIcon(resource.type)}</span>
-                                                                    <span className="text-sm text-gray-700 flex-1">{resource.title}</span>
+                                                                    <span className="text-sm text-gray-700 flex-1"><Translated text={resource.title} /></span>
                                                                 </div>
                                                             ))}
                                                         </div>
@@ -608,8 +609,8 @@ const ReadingList = () => {
 
                                                     <div className="flex justify-between text-sm text-gray-500">
                                                         <div>
-                                                            <div>Created: {formatDate(reading.createdAt)}</div>
-                                                            <div>Modified: {formatDate(reading.lastModified)}</div>
+                                                            <div><Translated text="Created" />: {formatDate(reading.createdAt)}</div>
+                                                            <div><Translated text="Modified" />: {formatDate(reading.lastModified)}</div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -633,28 +634,28 @@ const ReadingList = () => {
                                 className="col-span-4 flex items-center cursor-pointer"
                                 onClick={() => handleSort('title')}
                             >
-                                Reading {renderSortIcon('title')}
+                                <Translated text="Reading" /> {renderSortIcon('title')}
                             </div>
                             <div
                                 className="col-span-2 flex items-center cursor-pointer"
                                 onClick={() => handleSort('subject')}
                             >
-                                Subject {renderSortIcon('subject')}
+                                <Translated text="Subject" /> {renderSortIcon('subject')}
                             </div>
                             <div
                                 className="col-span-2 flex items-center cursor-pointer"
                                 onClick={() => handleSort('gradeLevel')}
                             >
-                                Grade {renderSortIcon('gradeLevel')}
+                                <Translated text="Grade" /> {renderSortIcon('gradeLevel')}
                             </div>
                             <div
                                 className="col-span-2 flex items-center cursor-pointer"
                                 onClick={() => handleSort('status')}
                             >
-                                Status {renderSortIcon('status')}
+                                <Translated text="Status" /> {renderSortIcon('status')}
                             </div>
                             <div className="col-span-2 text-center">
-                                Actions
+                                <Translated text="Actions" />
                             </div>
                         </div>
 
@@ -672,12 +673,12 @@ const ReadingList = () => {
                                         <div className="md:col-span-4">
                                             <div className="font-medium text-gray-900">{reading.title}</div>
                                             <div className="text-sm text-gray-500 mt-1">
-                                                {reading.objectives[0]}
+                                                <Translated text={reading.objectives[0]} />
                                                 {reading.objectives.length > 1 && '...'}
                                             </div>
                                             <div className="flex items-center text-sm text-gray-500 mt-1">
                                                 <FaChalkboardTeacher className="mr-1" />
-                                                <span>by {reading.author}</span>
+                                                <span><Translated text="by" /> {reading.author}</span>
                                                 <span className="mx-2">•</span>
                                                 <FaClock className="mr-1" />
                                                 <span>{reading.duration}</span>
@@ -705,7 +706,7 @@ const ReadingList = () => {
                                             <div className="text-sm text-gray-500 mt-1">
                                                 <div className="flex items-center">
                                                     <FaUsers className="mr-1" />
-                                                    <span>Taught {reading.timesTaught} times</span>
+                                                    <span><Translated text="Taught" /> {reading.timesTaught} <Translated text="times" /></span>
                                                 </div>
                                                 {renderRating(reading.rating)}
                                             </div>
@@ -729,7 +730,7 @@ const ReadingList = () => {
                                                 whileHover={{ scale: 1.1 }}
                                                 whileTap={{ scale: 0.9 }}
                                                 className="p-2 text-gray-400 rounded-full cursor-not-allowed"
-                                                title="Edit Reading (disabled)"
+                                                title={`${<Translated text="Edit Reading (disabled)" />}`}
                                                 disabled
                                             >
                                                 <FaEdit />
@@ -739,7 +740,7 @@ const ReadingList = () => {
                                                 whileHover={{ scale: 1.1 }}
                                                 whileTap={{ scale: 0.9 }}
                                                 className="p-2 text-gray-400 rounded-full cursor-not-allowed"
-                                                title="Delete Reading (disabled)"
+                                                title={`${<Translated text="Delete Reading (disabled)" />}`}
                                                 disabled
                                             >
                                                 <FaTrash />
@@ -758,7 +759,7 @@ const ReadingList = () => {
                                                 className="bg-gray-50 p-4 border-t border-gray-200"
                                             >
                                                 <div className="flex justify-between items-center mb-4">
-                                                    <h3 className="font-medium text-gray-800">Reading Details</h3>
+                                                    <h3 className="font-medium text-gray-800"><Translated text="Reading Details" /></h3>
                                                     <button 
                                                         onClick={() => setExpandedReading(null)}
                                                         className="text-gray-400 hover:text-gray-600"
@@ -769,14 +770,14 @@ const ReadingList = () => {
 
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     <div>
-                                                        <h4 className="font-medium text-gray-700 mb-2">Learning Objectives</h4>
+                                                        <h4 className="font-medium text-gray-700 mb-2"><Translated text="Learning Objectives" /></h4>
                                                         <ul className="list-disc pl-5 space-y-1">
                                                             {reading.objectives.map((obj, i) => (
                                                                 <li key={i} className="text-sm text-gray-600">{obj}</li>
                                                             ))}
                                                         </ul>
 
-                                                        <h4 className="font-medium text-gray-700 mt-4 mb-2">Standards</h4>
+                                                        <h4 className="font-medium text-gray-700 mt-4 mb-2"><Translated text="Standards" /></h4>
                                                         <ul className="list-disc pl-5 space-y-1">
                                                             {reading.standards.map((standard, i) => (
                                                                 <li key={i} className="text-sm text-gray-600">{standard}</li>
@@ -785,25 +786,25 @@ const ReadingList = () => {
                                                     </div>
 
                                                     <div>
-                                                        <h4 className="font-medium text-gray-700 mb-2">Attached Files</h4>
+                                                        <h4 className="font-medium text-gray-700 mb-2"><Translated text="Attached Files" /></h4>
                                                         <div className="space-y-2">
                                                             {reading.resources.map((resource, i) => (
                                                                 <div key={i} className="flex items-center bg-white p-2 rounded-lg border">
                                                                     <span className="mr-2">{getResourceIcon(resource.type)}</span>
-                                                                    <span className="text-sm text-gray-700 flex-1">{resource.title}</span>
+                                                                    <span className="text-sm text-gray-700 flex-1"><Translated text={resource.title} /></span>
                                                                 </div>
                                                             ))}
                                                         </div>
 
                                                         <div className="flex justify-between mt-4 text-sm text-gray-500">
                                                             <div>
-                                                                <div>Created: {formatDate(reading.createdAt)}</div>
-                                                                <div>Modified: {formatDate(reading.lastModified)}</div>
+                                                                <div><Translated text="Created" />: {formatDate(reading.createdAt)}</div>
+                                                                <div><Translated text="Modified" />: {formatDate(reading.lastModified)}</div>
                                                             </div>
                                                             <div className="text-right">
                                                                 <div className="flex items-center">
                                                                     <FaChartBar className="mr-1" />
-                                                                    <span>Taught {reading.timesTaught} times</span>
+                                                                    <span><Translated text="Taught" /> {reading.timesTaught} times</span>
                                                                 </div>
                                                                 {renderRating(reading.rating)}
                                                             </div>

@@ -2,8 +2,9 @@ import { useEffect, useState, useMemo } from "react";
 import useSWR from "swr";
 import { useAtom } from "jotai";
 import { toast } from "sonner";
+import axios from "axios";
 
-import axiosInstance, { endpoints } from "../utils/axios";
+import { endpoints, getWithCache } from "../utils/axios";
 import { getPermissionsDB, setPermissionDB } from "../indexDB/permission";
 import { PermissionAtom } from "../atoms/permission";
 import { Permission, PermissionsResponse } from "../types/Permissions";
@@ -13,32 +14,26 @@ import { Permission, PermissionsResponse } from "../types/Permissions";
 // -----------------------------
 const fetcher = async (url: string) => {
   try {
-    const res = await axiosInstance.get<PermissionsResponse>(url);
-    return res.data;
-  } catch (error: any) {
-    console.error("❌ My Permissions fetch error:", error.response?.data);
+    return await getWithCache<PermissionsResponse>(url);
+  } catch (error: unknown) {
+    console.error("❌ My Permissions fetch error:", axios.isAxiosError(error) ? error.response?.data : error);
 
-    if (error.response?.status === 403) {
+    if (axios.isAxiosError(error) && error.response?.status === 403) {
       throw new Error("FORBIDDEN: You do not have permission to view permissions");
     }
-    if (error.response?.status === 401) {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
       throw new Error("UNAUTHORIZED: Please login again");
     }
     throw error;
   }
 };
 
-// -----------------------------
-// Hook Definition
-// -----------------------------
-// action/permission.ts - Add detailed debugging
 export const usePermissions = () => {
   const [permissions, setPermissions] = useAtom(PermissionAtom);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [hasPermissionError, setHasPermissionError] = useState(false);
 
 
-  // 🌐 Track online/offline state
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);
@@ -52,7 +47,6 @@ export const usePermissions = () => {
     };
   }, []);
 
-  // 🚫 Only fetch if online and allowed
   const shouldFetch = !isOffline && !hasPermissionError;
 
   const { data, error, isValidating, mutate } = useSWR<PermissionsResponse>(
@@ -61,15 +55,14 @@ export const usePermissions = () => {
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
-      shouldRetryOnError: (error: any) => {
-        return !error?.message?.includes("FORBIDDEN") && !error?.message?.includes("UNAUTHORIZED");
+      shouldRetryOnError: (error: unknown) => {
+        const message = error instanceof Error ? error.message : "";
+        return !message.includes("FORBIDDEN") && !message.includes("UNAUTHORIZED");
       },
     }
   );
 
-  // -----------------------------
-  // Handle API Errors
-  // -----------------------------
+
   useEffect(() => {
     if (error) {
 
@@ -84,9 +77,6 @@ export const usePermissions = () => {
     }
   }, [error]);
 
-  // -----------------------------
-  // Load from IndexedDB when offline or forbidden
-  // -----------------------------
   useEffect(() => {
     const loadPermissionsFromDB = async () => {
       try {

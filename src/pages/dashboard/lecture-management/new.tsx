@@ -1,17 +1,10 @@
-
-
-// ----------------------------------------------------------------------
-
+import { useEffect } from "react";
 import { MaterialCreateView } from "../../../section/Student-management/Materials-management/view";
 
-export default function Page() {
-  return (
-    <>
-      <head>
-        <title> Dashboard: Create a new Materials</title>
-      </head>
+export default function MaterialsCreatePage() {
+  useEffect(() => {
+    document.title = "RuralSpark: Create New Material ";
+  }, []);
 
-      < MaterialCreateView/>
-    </>
-  );
+  return <MaterialCreateView />;
 }

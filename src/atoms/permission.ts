@@ -1,4 +1,6 @@
-import { atom } from "jotai";
-import { Permission } from "../types/Permissions";
-
-export const PermissionAtom = atom<Permission[]>([]);
+export {
+	permissionAtom as PermissionAtom,
+	// permissionItemsAtom,
+	// permissionCountAtom,
+	// permissionKeyMapAtom,
+} from '../store/atoms/permission.atoms';

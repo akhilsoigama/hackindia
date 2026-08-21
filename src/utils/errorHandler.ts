@@ -1,6 +1,5 @@
 // utils/errorHandler.ts
 import axios from "axios";
-import Cookies from "js-cookie";
 import { toast } from "sonner";
 
 // Map HTTP status codes to user-friendly messages
@@ -52,24 +51,17 @@ export function validateToken(token: string | undefined): boolean {
 }
 
 // Handle token refresh (assuming backend has a /refresh endpoint)
-export async function refreshToken(): Promise<string | null> {
+export async function refreshToken(): Promise<boolean> {
   try {
-    const response = await axios.post(
+    await axios.post(
       `${import.meta.env.VITE_BACKEND_URL}/refresh`,
       {},
       { withCredentials: true }
     );
-    const newToken = response.data?.token;
-    if (newToken) {
-      Cookies.set("token", newToken, { secure: true, sameSite: "strict" });
-      console.log("Token refreshed successfully");
-      return newToken;
-    }
-    return null;
+    return true;
   } catch (error) {
     console.error("Token refresh failed:", error);
-    Cookies.remove("token");
     toast.error("Session expired. Please log in again.");
-    return null;
+    return false;
   }
 }

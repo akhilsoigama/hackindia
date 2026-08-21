@@ -1,5 +1,9 @@
-import { AnimatePresence, motion } from "framer-motion";
-import { FiMenu, FiX } from "react-icons/fi";
+import { motion, useReducedMotion } from "framer-motion";
+import { FiX } from "react-icons/fi";
+import { useTheme } from "@/theme/AppThemeProvider";
+import { LuChevronLeft } from "react-icons/lu";
+import RuralSparkLogo from "../../components/ui/RuralSparkLogo";
+import { Translated } from "../../components/common/translator/translator";
 
 interface SidebarHeaderProps {
   isSidebarExpanded: boolean;
@@ -14,43 +18,110 @@ const SidebarHeader = ({
   toggleMobileSidebar,
   toggleSidebar,
 }: SidebarHeaderProps) => {
-  return (
-    <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-      <AnimatePresence>
-        {isSidebarExpanded && (
-          <motion.h2
-            className="text-xl font-semibold text-gray-800 tracking-tight"
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-          >
-            Dashboard
-          </motion.h2>
-        )}
-      </AnimatePresence>
+  const { mode } = useTheme();
+  const isDark = mode === "dark";
+  const shouldReduceMotion = useReducedMotion();
+  const transition = { duration: 0.15, ease: "easeOut" as const };
 
-      {/* Mobile toggle */}
-      {isMobile && (
+  const toggleBtnClass = `
+    flex h-7 w-7 flex-shrink-0 items-center justify-center
+    rounded-lg border ${isDark ? "border-gray-800" : "border-gray-300"} transition-all duration-200 ease-in-out
+    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40
+    ${
+      isDark
+        ? "bg-slate-950/70 text-gray-400 hover:bg-gray-700 hover:text-gray-200 hover:border-gray-600"
+        : "bg-white  text-gray-500 hover:bg-gray-200/80 hover:text-gray-800 hover:border-gray-300"
+    }
+  `;
+
+  // ── Mobile layout ─────────────────────────────────────────────────────────
+  if (isMobile) {
+    return (
+      <div
+        className={`flex items-center gap-6 ${isDark ? "bg-slate-950/70" : "bg-white"} px-4 py-4`}
+      >
+        <div
+          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl  ring-1 bg-transparent`}
+        >
+          <RuralSparkLogo
+            isDark={isDark}
+            showSubtitle={false}
+            iconClassName="h-9 w-9" 
+          />
+        </div>
+
+        <motion.h2
+          initial={shouldReduceMotion ? false : { opacity: 0, x: -6 }}
+          animate={shouldReduceMotion ? {} : { opacity: 1, x: 0 }}
+          transition={transition}
+          className={`flex-1  min-w-0 truncate text-sm font-semibold tracking-tight ${
+            isDark ? "text-slate-100" : "text-slate-900"
+          }`}
+        >
+          <Translated text="Dashboard" />
+        </motion.h2>
+
         <button
           onClick={toggleMobileSidebar}
-          className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 lg:hidden"
+          className={toggleBtnClass}
+          aria-label="Close sidebar"
         >
-          <FiX className="w-6 h-6 text-gray-600" />
+          <FiX className="h-3.5 w-3.5" />
         </button>
-      )}
+      </div>
+    );
+  }
 
-      {/* Desktop toggle */}
-      {!isMobile && (
-        <motion.button
-          onClick={toggleSidebar}
-          className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 hidden lg:block"
-          whileHover={{ scale: 1.1, rotate: 3 }}
-          whileTap={{ scale: 0.95 }}
+  if (isSidebarExpanded) {
+    return (
+      <div
+        className={`flex items-center gap-3 ${isDark ? "bg-slate-950/70" : "bg-white"} px-4 py-4`}
+      >
+        <motion.div
+          initial={shouldReduceMotion ? false : { opacity: 0, y: -6 }}
+          animate={shouldReduceMotion ? {} : { opacity: 1, y: 0 }}
+          transition={transition}
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-transparent`}
         >
-          {isSidebarExpanded ? <FiX className="w-6 h-6 text-gray-600" /> : <FiMenu className="w-6 h-6 text-gray-600" />}
-        </motion.button>
-      )}
+          <RuralSparkLogo isDark={isDark} showSubtitle={false} iconClassName="h-12 w-12 scale-[1]"/>
+        </motion.div>
+
+        <motion.h2
+          initial={shouldReduceMotion ? false : { opacity: 0, x: -6 }}
+          animate={shouldReduceMotion ? {} : { opacity: 1, x: 0 }}
+          exit={shouldReduceMotion ? {} : { opacity: 0, x: -6 }}
+          transition={transition}
+          className={`flex-1 min-w-0 truncate text-sm font-semibold tracking-tight ${
+            isDark ? "text-slate-100" : "text-slate-900"
+          }`}
+        >
+          <Translated text="Dashboard" />
+        </motion.h2>
+
+        <button
+          onClick={toggleSidebar}
+          className={`${toggleBtnClass} hidden lg:flex`}
+          aria-label="Collapse sidebar"
+          title="Collapse sidebar"
+        >
+          <LuChevronLeft className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`flex items-center gap-4 justify-center ${isDark ? "bg-slate-950/70" : "bg-white"} px-4 py-4`}
+    >
+      <button
+        onClick={toggleSidebar}
+        className={`${toggleBtnClass} hidden lg:flex`}
+        aria-label="Expand sidebar"
+        title="Expand sidebar"
+      >
+        <LuChevronLeft className="h-3.5 w-3.5 rotate-180" />
+      </button>
     </div>
   );
 };

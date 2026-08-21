@@ -1,12 +1,16 @@
-// hooks/usePermissionMatch.ts
 import { useMemo, useState, useEffect } from 'react';
 import { useUser } from '../atoms/userAtom';
 import { PermissionKeys } from '../utils/permission';
 
+type CachedUserData = {
+  roles?: string[];
+  roleName?: string;
+  permissions?: string[] | Record<string, boolean>;
+};
+
 export const usePermissionsCheck = () => {
   const { user } = useUser();
-  
-  const [cachedUserData, setCachedUserData] = useState<any>(null);
+  const [cachedUserData, setCachedUserData] = useState<CachedUserData | null>(null);
 
   // Clear old cached data first
   useEffect(() => {
@@ -19,7 +23,7 @@ export const usePermissionsCheck = () => {
             localStorage.removeItem('cachedUserData');
             setCachedUserData(null);
           }
-        } catch (error) {
+        } catch {
           localStorage.removeItem('cachedUserData');
         }
       }
@@ -46,7 +50,7 @@ export const usePermissionsCheck = () => {
         } else {
           localStorage.removeItem('cachedUserData');
         }
-      } catch (error) {
+      } catch {
         localStorage.removeItem('cachedUserData');
       }
     }
@@ -55,18 +59,27 @@ export const usePermissionsCheck = () => {
   // Use current user data or fallback to cached data
   const effectiveUserData = user?.data || cachedUserData;
 
+  // Ensure we get ALL permissions including role-based ones
   const userDirectPermissions = useMemo(() => {
-    const permissions = effectiveUserData?.permissions || [];
-    return permissions;
+    const rawPermissions = effectiveUserData?.permissions;
+
+    if (Array.isArray(rawPermissions)) {
+      return rawPermissions;
+    }
+
+    if (rawPermissions && typeof rawPermissions === 'object') {
+      const permissionMap = rawPermissions as Record<string, boolean>;
+      return Object.keys(permissionMap).filter((key) => permissionMap[key] === true);
+    }
+
+    return [];
   }, [effectiveUserData?.permissions]);
 
   const userRoles = useMemo(() => {
     const roles = effectiveUserData?.roles || [];
-    
-    const uniqueRoles = Array.from(new Set(roles)).filter(role => 
-      role && typeof role === 'string' && role.trim() !== ''
+    const uniqueRoles = Array.from(new Set(roles)).filter(
+      role => role && typeof role === 'string' && role.trim() !== ''
     );
-    
     return uniqueRoles;
   }, [effectiveUserData?.roles]);
 
@@ -79,16 +92,14 @@ export const usePermissionsCheck = () => {
       if (!requiredPermissions || requiredPermissions.length === 0) {
         return true;
       }
-      
+
       if (userRoles.includes('super_admin') || userDirectPermissions.includes('*')) {
         return true;
       }
-      
-      const hasAny = requiredPermissions.some(permission => 
+
+      return requiredPermissions.some(permission =>
         userDirectPermissions.includes(permission)
       );
-      
-      return hasAny;
     };
   }, [userDirectPermissions, userRoles]);
 
@@ -97,12 +108,12 @@ export const usePermissionsCheck = () => {
       if (!requiredPermissions || requiredPermissions.length === 0) {
         return true;
       }
-      
+
       if (userRoles.includes('super_admin') || userDirectPermissions.includes('*')) {
         return true;
       }
-      
-      return requiredPermissions.every(permission => 
+
+      return requiredPermissions.every(permission =>
         userDirectPermissions.includes(permission)
       );
     };

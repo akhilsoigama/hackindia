@@ -1,13 +1,7 @@
 // context/TranslateContext.tsx
-import { createContext, useContext, ReactNode } from 'react';
+import { ReactNode } from 'react';
 import useTranslateWithAtom from '../action/translate';
-
-interface TranslateContextType {
-  translate: (text: string) => Promise<string>;
-  currentLanguage: string;
-}
-
-const TranslateContext = createContext<TranslateContextType | null>(null);
+import { TranslateContext } from './translaterContext';
 
 export const TranslateProvider = ({ children }: { children: ReactNode }) => {
   const { translateText, currentLanguage } = useTranslateWithAtom();
@@ -27,10 +21,4 @@ export const TranslateProvider = ({ children }: { children: ReactNode }) => {
       {children}
     </TranslateContext.Provider>
   );
-};
-
-export const useTranslate = () => {
-  const ctx = useContext(TranslateContext);
-  if (!ctx) throw new Error('useTranslate must be used inside TranslateProvider');
-  return ctx;
 };

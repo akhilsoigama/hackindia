@@ -8,17 +8,20 @@ export type IUserRolePermissionItem = {
   updatedAt: string;
   permissions: string;
   isAdmin?: boolean;
+  _syncedAt?: number;
+  _isFresh?: boolean;
 };
 
 export type ICreateUserRolePermission = {
   roleName: string;
-  roleDescription?: string;
+  roleDescription?: string | null;
   roleKey: string;
   isDefault?: boolean;
   permissionIds: number[];
 };
 
 export type IUpdateUserRolePermission = {
+  id?:number;
   roleName?: string;
   roleDescription?: string;
   roleKey?: string;

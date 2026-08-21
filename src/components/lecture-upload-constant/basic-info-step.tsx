@@ -1,14 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { UseFormWatch, UseFormSetValue, UseFormGetValues } from 'react-hook-form';
 
-import { FaClock } from 'react-icons/fa';
 import { ContentType, LessonFormData } from '../../hooks/useLectureUploadForm';
 import ContentTypeSelector from './lecture-content-type';
 import ContentTypeFields from './content-type';
 import RHFFormField from '../hook-form/RHFFormFiled';
 import RHFDropDown from '../hook-form/RHFDropDown';
-import { gradeLevels, subjects } from './lecture-upload-constant';
+import { difficultyLevels, gradeLevels, subjects } from './lecture-upload-constant';
 import { ILecture } from '../../types/material';
+import { Translated } from '../common/translator/translator';
+import { useTheme } from '@/theme/AppThemeProvider';
+import { useDepartments } from '../../action/department';
 
 interface BasicInfoStepProps {
   watch: UseFormWatch<LessonFormData>;
@@ -20,24 +22,39 @@ interface BasicInfoStepProps {
 const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
   watch,
   setValue,
-  currentData, 
+  currentData,
 }) => {
 
-  // Prefill form when editing existing lecture
-useEffect(() => {
-  if (currentData) {
-    setValue('title', currentData.title || '');
-    setValue('description', currentData.description || '');
-    setValue('subject', currentData.subject || '');
-    setValue('std', currentData.std || ''); // std is now in ILecture
-    setValue('contentType', currentData.contentType);
-    setValue('thumbnailUrl', currentData.thumbnailUrl || '');
-    setValue('contentUrl', currentData.videoUrl || '');
-    setValue('durationInSeconds', currentData.durationInSeconds || undefined);
-    setValue('textContent', currentData.textContent || '');
-    setValue('duration', undefined); 
-  }
-}, [currentData, setValue]);
+  const { mode } = useTheme();
+  const isDark = mode === "dark";
+  const { departments } = useDepartments();
+
+  const departmentOptions = useMemo(
+    () => (departments || []).map((department) => ({
+      value: department.id,
+      label: department.departmentName,
+    })),
+    [departments]
+  );
+
+  useEffect(() => {
+    if (currentData) {
+      setValue('title', currentData.title || '');
+      setValue('description', currentData.description || '');
+      setValue('subject', currentData.subject || '');
+      setValue('std', currentData.std || ''); // std is now in ILecture
+      setValue('departmentId', currentData.departmentId || undefined);
+      setValue('chapterTopic', currentData.chapterTopic || '');
+      setValue('learningObjectives', currentData.learningObjectives || '');
+      setValue('difficultyLevel', currentData.difficultyLevel || 'Beginner');
+      setValue('contentType', currentData.contentType);
+      setValue('thumbnailUrl', currentData.thumbnailUrl || '');
+      setValue('contentUrl', currentData.contentUrl || '');
+      setValue('durationInSeconds', currentData.durationInSeconds || undefined);
+      setValue('textContent', currentData.textContent || '');
+      setValue('duration', undefined);
+    }
+  }, [currentData, setValue]);
 
   const handleContentTypeChange = (type: ContentType) => {
     setValue('contentType', type);
@@ -47,10 +64,15 @@ useEffect(() => {
   };
 
   return (
-    <div className="mb-5">
-      <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">
-        Student Material {currentData ? 'Edit' : 'Create'}
-      </h2>
+    <div className={`rounded-2xl space-y-6 border px-5 py-4 ${isDark ? 'border-slate-700 bg-slate-950/70' : 'border-slate-200 '}`}>
+      <div className="mb-4">
+        <h2 className={`text-3xl sm:text-4xl  font-bold ${isDark ? 'text-gray-100' : 'text-slate-950/70'} flex items-center gap-3`}>
+        <Translated text="Student Material" /> {currentData ? <Translated text='Edit' /> : <Translated text='Create' />}
+        </h2>
+        <p className={`mt-1 text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+          <Translated text="Configure the lecture details, content type, and upload assets." />
+        </p>
+      </div>
 
       <ContentTypeSelector
         watch={watch}
@@ -59,7 +81,7 @@ useEffect(() => {
 
       <RHFFormField
         name="title"
-        label="Material Title"
+        label={<Translated text="Material Title" />}
         type="text"
         placeholder="Enter Material title"
         required
@@ -67,14 +89,14 @@ useEffect(() => {
 
       <RHFFormField
         name="description"
-        label="Description"
+        label={<Translated text="Description" />}
         placeholder="Enter Material description"
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <RHFDropDown
           name="subject"
-          label="Subject"
+          label={<Translated text="Subject" />}
           options={subjects.map(subject => ({ value: subject, label: subject }))}
           placeholder="Select a subject"
           required
@@ -82,22 +104,46 @@ useEffect(() => {
 
         <RHFDropDown
           name="std"
-          label="Select STD"
+          label={<Translated text="Standard" />}
           options={gradeLevels.map(level => ({ value: level, label: level }))}
-          placeholder="Select grade level"
+          placeholder="Select standard"
           required
         />
       </div>
 
-      <RHFFormField
-        name="duration"
-        label="Estimated Duration"
-        type="date"
-        placeholder="e.g., 45 minutes, 2 class periods"
-        icon={<FaClock className="text-indigo-500" />}
-      />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <RHFDropDown
+          name="departmentId"
+          label={<Translated text="Department" />}
+          options={departmentOptions}
+          placeholder="Select department"
+        />
 
-      <ContentTypeFields watch={watch} />
+        <RHFDropDown
+          name="difficultyLevel"
+          label={<Translated text="Difficulty Level" />}
+          options={difficultyLevels.map((level) => ({ value: level, label: level }))}
+          placeholder="Select difficulty"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <RHFFormField
+          name="chapterTopic"
+          label={<Translated text="Chapter / Topic" />}
+          placeholder="Example: Algebraic Expressions"
+        />
+
+        <RHFFormField
+          name="learningObjectives"
+          label={<Translated text="Learning Objectives" />}
+          placeholder="What should students learn from this lecture?"
+          type="textarea"
+        />
+      </div>
+
+
+      <ContentTypeFields watch={watch} currentData={currentData} />
     </div>
   );
 };

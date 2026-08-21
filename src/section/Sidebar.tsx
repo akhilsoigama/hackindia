@@ -1,36 +1,37 @@
 // components/Sidebar.tsx
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useLocation } from "react-router-dom";
-import { motion } from 'framer-motion';
 import { useState, useEffect, useMemo } from "react";
 import { modules } from "../routers/ModulePath";
+import UiSidebar from '../components/ui/dashboard-with-collapsible-sidebar';
 import { SidebarHeader, SidebarNav } from "../layouts/sidebar-section";
 import { usePermissionsCheck } from "../hooks/usePermissionMatch";
 import { Module, SidebarLink, SubLink, FilteredModule, FilteredSidebarLink } from "../types/sidebar";
 import { FiLoader } from "react-icons/fi";
+import { throttle } from "../utils/performance";
 
 interface SidebarProps {
   isMobileOpen: boolean;
   toggleMobileSidebar: () => void;
+  useUiSidebar?: boolean;
 }
 
-const Sidebar = ({ isMobileOpen, toggleMobileSidebar }: SidebarProps) => {
+const Sidebar = ({ isMobileOpen, toggleMobileSidebar, useUiSidebar = false }: SidebarProps) => {
+  const shouldReduceMotion = useReducedMotion();
+  const transition = { duration: 0.15, ease: 'easeOut' as const };
   const [expandedLink, setExpandedLink] = useState<string | null>(null);
   const [expandedSubLink, setExpandedSubLink] = useState<string | null>(null);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const location = useLocation();
-
   const {
     hasAnyOfPermissions,
-    userPermissionKeys,
     isSuperAdmin,
     isLoading,
     hasCachedData
   } = usePermissionsCheck();
 
   const filteredModules = useMemo((): FilteredModule[] => {
-    // During initial load, show all modules temporarily to prevent flickering
     if (isLoading && !hasCachedData) {
       return (modules as Module[]).map((module: Module): FilteredModule => ({
         moduleName: module.moduleName,
@@ -47,21 +48,25 @@ const Sidebar = ({ isMobileOpen, toggleMobileSidebar }: SidebarProps) => {
 
     const result = (modules as Module[])
       .map((module: Module): FilteredModule | null => {
-        let moduleAccess = false;
+        // 🔴 MODULE LEVEL PERMISSION CHECK - This determines if module shows up
+        let hasModuleAccess = false;
 
         if (isSuperAdmin) {
-          moduleAccess = true;
+          hasModuleAccess = true;
         } else if (module.permissions.length === 0) {
-          moduleAccess = true;
+          // If no permissions defined, show module (fallback)
+          hasModuleAccess = true;
         } else {
-          moduleAccess = hasAnyOfPermissions(module.permissions);
+          // Check if user has ANY of the module-level permissions
+          hasModuleAccess = hasAnyOfPermissions(module.permissions);
         }
 
-        if (!moduleAccess) {
+        // ❌ If no module access, return null (hide entire module)
+        if (!hasModuleAccess) {
           return null;
         }
 
-        // Filter links
+        // ✅ Module is visible, now filter links
         const filteredLinks: FilteredSidebarLink[] = module.links
           .map((link: SidebarLink): FilteredSidebarLink | null => {
             let linkAccess = false;
@@ -97,6 +102,11 @@ const Sidebar = ({ isMobileOpen, toggleMobileSidebar }: SidebarProps) => {
                 .filter((subLink): subLink is SubLink => subLink !== null);
             }
 
+            // If link has subLinks but none are accessible, don't show the link
+            if (link.subLinks && link.subLinks.length > 0 && (!filteredSubLinks || filteredSubLinks.length === 0)) {
+              return null;
+            }
+
             const filteredLink: FilteredSidebarLink = {
               to: link.to,
               label: link.label,
@@ -109,6 +119,7 @@ const Sidebar = ({ isMobileOpen, toggleMobileSidebar }: SidebarProps) => {
           })
           .filter((link): link is FilteredSidebarLink => link !== null);
         
+        // Return module only if it has at least one visible link
         return filteredLinks.length > 0 ? {
           moduleName: module.moduleName,
           permissions: module.permissions,
@@ -118,17 +129,18 @@ const Sidebar = ({ isMobileOpen, toggleMobileSidebar }: SidebarProps) => {
       .filter((module): module is FilteredModule => module !== null);
     
     return result;
-  }, [userPermissionKeys, isSuperAdmin, hasAnyOfPermissions, isLoading, hasCachedData]);
+  }, [isSuperAdmin, hasAnyOfPermissions, isLoading, hasCachedData]);
 
   useEffect(() => {
     const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 1024);
+      setIsMobile(window.innerWidth < 768);
     };
+    const throttledCheckIsMobile = throttle(checkIsMobile, 160);
 
     checkIsMobile();
-    window.addEventListener('resize', checkIsMobile);
+    window.addEventListener('resize', throttledCheckIsMobile);
 
-    return () => window.removeEventListener('resize', checkIsMobile);
+    return () => window.removeEventListener('resize', throttledCheckIsMobile);
   }, []);
 
   useEffect(() => {
@@ -180,41 +192,50 @@ const Sidebar = ({ isMobileOpen, toggleMobileSidebar }: SidebarProps) => {
     }
   };
 
+  const sidebarWidth = useMemo(() => {
+    if (isMobile) {
+      return '260px';
+    }
+    return isSidebarExpanded ? '260px' : '72px';
+  }, [isMobile, isSidebarExpanded]);
+
+  if (useUiSidebar) {
+    return <UiSidebar isMobileOpen={isMobileOpen} toggleMobileSidebar={toggleMobileSidebar} />;
+  }
+
   const handleLinkClick = () => {
     if (isMobile) {
       toggleMobileSidebar();
     }
   };
 
-  const sidebarWidth = useMemo(() => {
-    if (isMobile) {
-      return isSidebarExpanded ? '16rem' : '4rem';
-    }
-    return isSidebarExpanded ? '18rem' : '5rem';
-  }, [isMobile, isSidebarExpanded]);
-
   return (
     <>
       <AnimatePresence>
         {isMobile && isMobileOpen && (
           <motion.div
-            className="fixed inset-0 bg-gray-100 bg-opacity-75 z-50 lg:hidden"
+            className="fixed inset-0 z-40 lg:hidden"
             onClick={toggleMobileSidebar}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: { duration: 0.3 } }}
+            initial={shouldReduceMotion ? false : { opacity: 0 }}
+            animate={shouldReduceMotion ? {} : { opacity: 1 }}
+            exit={shouldReduceMotion ? {} : { opacity: 0 }}
+            transition={transition}
           />
         )}
       </AnimatePresence>
 
       <motion.aside
-        className={`h-screen fixed lg:sticky top-0 flex flex-col transition-all duration-300 overflow-y-auto scrollbar-hide ${!isMobile ? 'overflow-hidden' : 'overflow-x-auto'
-          } shadow-lg z-50 bg-white ${isMobile ? (isMobileOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'
-          }`}
+        className={`fixed left-0 top-0 z-50 flex h-screen flex-col border-r shadow-md transition-[transform,background-color,border-color,color] duration-150 ease-in-out lg:sticky ${
+          isMobile ? 'overflow-y-auto' : 'overflow-hidden'
+        } overflow-x-hidden ${
+          isMobile ? (isMobileOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'
+        } ${
+          'bg-white text-gray-900 border-gray-200 dark:bg-slate-950/70 dark:text-gray-100 dark:border-gray-800'
+        }`}
         style={{ width: sidebarWidth }}
-        initial={{ x: -100, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ duration: 0.5 }}
+        initial={shouldReduceMotion ? false : { opacity: 0, x: -24 }}
+        animate={shouldReduceMotion ? {} : { opacity: 1, x: 0 }}
+        transition={transition}
       >
         <SidebarHeader
           isSidebarExpanded={isSidebarExpanded}
@@ -224,10 +245,10 @@ const Sidebar = ({ isMobileOpen, toggleMobileSidebar }: SidebarProps) => {
         />
 
         {isLoading && !hasCachedData ? (
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-1 items-center justify-center">
             <div className="text-center">
-              <FiLoader className="w-6 h-6 animate-spin mx-auto mb-2 text-gray-500" />
-              <p className="text-sm text-gray-500">Loading...</p>
+              <FiLoader className="mx-auto mb-2 h-5 w-5 animate-spin text-gray-400" />
+              <p className="text-xs font-medium text-gray-500">Loading...</p>
             </div>
           </div>
         ) : (

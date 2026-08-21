@@ -23,7 +23,11 @@
     "noUncheckedSideEffectImports": true,
 
     /* Add this line */
-    "types": ["vite/client", "vite-plugin-pwa/client"]
+    "types": ["vite/client", "vite-plugin-pwa/client"],
+    "ignoreDeprecations": "5.0",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["src"]
 }

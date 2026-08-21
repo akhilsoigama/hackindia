@@ -3,10 +3,12 @@ import axios from 'axios';
 import { Controller, useFormContext, Path } from 'react-hook-form';
 import { LessonFormData } from '../../hooks/useLectureUploadForm';
 import { NavLink } from 'react-router-dom';
+import { Translated } from '../common/translator/translator';
+import { useTheme } from '@/theme/AppThemeProvider';
 
 interface RHFAudioUploadProps {
     name: keyof LessonFormData;
-    label?: string;
+    label?: string | React.ReactNode;
     required?: boolean;
     className?: string;
 }
@@ -18,6 +20,8 @@ const RHFAudioUpload: React.FC<RHFAudioUploadProps> = ({
     className = '',
 }) => {
     const { control } = useFormContext<LessonFormData>();
+    const { mode } = useTheme();
+    const isDark = mode === 'dark';
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [uploadProgress, setUploadProgress] = useState<number>(0);
     // const [uploadedUrl, setUploadedUrl] = useState<string>('');
@@ -84,14 +88,14 @@ const RHFAudioUpload: React.FC<RHFAudioUploadProps> = ({
             onChange(url);
         } catch (error: unknown) {
             if (axios.isAxiosError(error)) {
-                console.error('Audio Upload Failed:', error.response || error.message);
-                alert('Upload failed! Please try again.');
+                console.error(<Translated text='Audio Upload Failed:'/>, error.response || error.message);
+                alert(<Translated text='Upload failed! Please try again.'/>);
             } else if (error instanceof Error) {
-                console.error('Audio Upload Failed:', error.message);
-                alert('Upload failed! Please try again.');
+                console.error(<Translated text='Audio Upload Failed:'/>, error.message);
+                alert(<Translated text='Upload failed! Please try again.'/>);
             } else {
-                console.error('Unexpected error:', error);
-                alert('Upload failed! Please try again.');
+                console.error(<Translated text='Unexpected error:'/>, error);
+                alert(<Translated text='Upload failed! Please try again.'/>);
             }
         } finally {
             setIsUploading(false);
@@ -114,13 +118,13 @@ const RHFAudioUpload: React.FC<RHFAudioUploadProps> = ({
         if (!file) return;
 
         if (!file.type.startsWith('audio/')) {
-            alert('Please select an audio file (MP3, WAV, etc.)');
+            alert(<Translated text='Please select an audio file (MP3, WAV, etc.)'/>);
             return;
         }
 
         const maxSize = 50 * 1024 * 1024; // 50MB
         if (file.size > maxSize) {
-            alert('File size too large. Please select an audio file under 50MB.');
+            alert(<Translated text='File size too large. Please select an audio file under 50MB.'/>);
             return;
         }
 
@@ -135,13 +139,13 @@ const RHFAudioUpload: React.FC<RHFAudioUploadProps> = ({
             render={({ field: { onChange, value }, fieldState: { error } }) => (
                 <div className={`mb-6 ${className}`}>
                     {/* Label */}
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                        {label}
+                    <label className={`${isDark ? 'text-gray-100' : 'text-gray-700'} block text-sm font-semibold mb-3`}>
+                        <Translated text={typeof label === 'string' ? label : String(label ?? '')} />
                         {required && <span className="text-red-500 ml-1">*</span>}
                     </label>
 
                     {/* Upload Area */}
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-purple-400 transition-colors duration-200 bg-gray-50">
+                    <div className={`rounded-2xl border-2 border-dashed p-6 text-center transition-colors duration-200 ${isDark ? 'border-slate-700 bg-slate-950/60 hover:border-violet-400' : 'border-gray-300 bg-gray-50 hover:border-purple-400'}`}>
                         <input
                             type="file"
                             accept="audio/*"
@@ -157,9 +161,9 @@ const RHFAudioUpload: React.FC<RHFAudioUploadProps> = ({
                             className={`cursor-pointer flex flex-col items-center justify-center space-y-3 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''
                                 }`}
                         >
-                            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                            <div className={`flex h-12 w-12 items-center justify-center rounded-full ${isDark ? 'bg-violet-500/15' : 'bg-purple-100'}`}>
                                 <svg
-                                    className="w-6 h-6 text-purple-600"
+                                    className={`h-6 w-6 ${isDark ? 'text-violet-300' : 'text-purple-600'}`}
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -174,11 +178,11 @@ const RHFAudioUpload: React.FC<RHFAudioUploadProps> = ({
                             </div>
 
                             <div className="text-center">
-                                <p className="text-sm font-medium text-gray-700">
-                                    {isUploading ? 'Uploading Audio...' : 'Click to upload audio'}
+                                <p className={`${isDark ? 'text-gray-100' : 'text-gray-700'} text-sm font-semibold`}>
+                                    {isUploading ? <Translated text="Uploading Audio..." /> : <Translated text="Click to upload audio" />}
                                 </p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    MP3, WAV, AAC files (max 50MB)
+                                <p className={`${isDark ? 'text-slate-400' : 'text-gray-500'} mt-1 text-xs`}>
+                                    <Translated text="MP3, WAV, AAC files (max 50MB)"/>
                                 </p>
                             </div>
                         </label>
@@ -186,10 +190,10 @@ const RHFAudioUpload: React.FC<RHFAudioUploadProps> = ({
 
                     {/* File Info */}
                     {fileName && !isUploading && (
-                        <div className="mt-3 flex items-center justify-between bg-green-50 border border-green-200 rounded-md p-3">
+                        <div className={`mt-3 flex items-center justify-between rounded-xl border p-3 ${isDark ? 'border-emerald-900/40 bg-emerald-950/30' : 'border-green-200 bg-green-50'}`}>
                             <div className="flex items-center space-x-3">
                                 <svg
-                                    className="w-5 h-5 text-green-600"
+                                    className={`h-5 w-5 ${isDark ? 'text-emerald-300' : 'text-green-600'}`}
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -202,11 +206,11 @@ const RHFAudioUpload: React.FC<RHFAudioUploadProps> = ({
                                     />
                                 </svg>
                                 <div>
-                                    <span className="text-sm font-medium text-green-800 block">{fileName}</span>
-                                    {audioDuration && <span className="text-xs text-green-600">Duration: {audioDuration}</span>}
+                                    <span className={`${isDark ? 'text-emerald-200' : 'text-green-800'} block text-sm font-medium`}>{fileName}</span>
+                                    {audioDuration && <span className={`${isDark ? 'text-emerald-300' : 'text-green-600'} text-xs`}><Translated text="Duration: "/><Translated text={audioDuration}/></span>}
                                 </div>
                             </div>
-                            <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className={`h-4 w-4 ${isDark ? 'text-emerald-300' : 'text-green-600'}`} fill="currentColor" viewBox="0 0 20 20">
                                 <path
                                     fillRule="evenodd"
                                     d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -219,26 +223,26 @@ const RHFAudioUpload: React.FC<RHFAudioUploadProps> = ({
                     {/* Upload Progress */}
                     {isUploading && (
                         <div className="mt-4 space-y-2">
-                            <div className="flex justify-between text-sm text-gray-600">
-                                <span>Uploading {fileName}...</span>
-                                <span>{uploadProgress}%</span>
+                            <div className={`${isDark ? 'text-slate-300' : 'text-gray-600'} flex justify-between text-sm`}>
+                                <span><Translated text="Uploading" /> <Translated text={`${ fileName }...`} /></span>
+                                <span><Translated text={`${ uploadProgress }%`} /></span>
                             </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-200'} h-2 w-full rounded-full`}>
                                 <div
-                                    className="bg-purple-600 h-2 rounded-full transition-all duration-300 ease-out"
+                                    className="h-2 rounded-full bg-violet-600 transition-all duration-300 ease-out"
                                     style={{ width: `${uploadProgress}%` }}
                                 />
                             </div>
                             {audioDuration && (
-                                <p className="text-xs text-gray-500 text-center">Duration: {audioDuration}</p>
+                                <p className={`${isDark ? 'text-slate-400' : 'text-gray-500'} text-center text-xs`}><Translated text="Duration: "/> <Translated text={audioDuration}/></p>
                             )}
                         </div>
                     )}
 
                     {/* Audio Player */}
                     {value && !isUploading && (
-                        <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                            <p className="text-sm font-medium text-purple-700 mb-3 flex items-center">
+                        <div className={`mt-4 rounded-xl border p-4 ${isDark ? 'border-violet-900/40 bg-violet-950/30' : 'border-purple-200 bg-purple-50'}`}>
+                            <p className={`${isDark ? 'text-violet-100' : 'text-purple-700'} mb-3 flex items-center text-sm font-medium`}>
                                 <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                     <path
                                         fillRule="evenodd"
@@ -246,9 +250,9 @@ const RHFAudioUpload: React.FC<RHFAudioUploadProps> = ({
                                         clipRule="evenodd"
                                     />
                                 </svg>
-                                Audio Preview
+                                <Translated text="Audio Preview" />
                             </p>
-                            <audio controls className="w-full rounded-lg bg-white shadow-sm" preload="metadata">
+                            <audio controls className="w-full rounded-lg shadow-sm" preload="metadata">
                                 {/* Ensure value is string */}
                                 {typeof value === 'string' && (
                                     <>
@@ -257,18 +261,18 @@ const RHFAudioUpload: React.FC<RHFAudioUploadProps> = ({
                                         <source src={value} type="audio/aac" />
                                     </>
                                 )}
-                                Your browser does not support the audio element.
+                                <Translated text="Your browser does not support the audio element." />
                             </audio>
-                            <div className="mt-2 flex justify-between items-center text-xs text-purple-600">
-                                <span>Ready to use in your lesson</span>
+                            <div className={`${isDark ? 'text-violet-300' : 'text-purple-600'} mt-2 flex items-center justify-between text-xs`}>
+                                <span><Translated text="Ready to use in your lesson" /></span>
                                 {/* Use NavLink instead of <a> */}
                                 {typeof value === 'string' && (
                                     <NavLink
                                         to={value}
                                         target="_blank"
-                                        className="hover:text-purple-800 underline"
+                                        className={`${isDark ? 'hover:text-violet-200' : 'hover:text-purple-800'} underline`}
                                     >
-                                        Open in new tab
+                                        <Translated text="Open in new tab" />
                                     </NavLink>
                                 )}
                             </div>
@@ -277,7 +281,7 @@ const RHFAudioUpload: React.FC<RHFAudioUploadProps> = ({
 
                     {/* Error Message */}
                     {error && (
-                        <p className="mt-2 text-sm text-red-600 flex items-center">
+                        <p className="mt-2 flex items-center text-sm text-red-500">
                             <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                 <path
                                     fillRule="evenodd"
@@ -285,7 +289,7 @@ const RHFAudioUpload: React.FC<RHFAudioUploadProps> = ({
                                     clipRule="evenodd"
                                 />
                             </svg>
-                            {error.message || 'This field is required'}
+                            {error.message || <Translated text='This field is required'/>}
                         </p>
                     )}
 
@@ -295,7 +299,7 @@ const RHFAudioUpload: React.FC<RHFAudioUploadProps> = ({
                             <button
                                 type="button"
                                 onClick={() => handleReset(onChange)}
-                                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors duration-200"
+                                className={`inline-flex items-center rounded-md border px-3 py-2 text-sm font-medium leading-4 shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 ${isDark ? 'border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
                             >
                                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path
@@ -305,7 +309,7 @@ const RHFAudioUpload: React.FC<RHFAudioUploadProps> = ({
                                         d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                                     />
                                 </svg>
-                                Remove Audio
+                                <Translated text="Remove Audio" />
                             </button>
                         </div>
                     )}

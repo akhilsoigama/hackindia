@@ -1,5 +1,5 @@
 // hooks/useMultiLanguageTTS.ts
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 
 interface LanguageConfig {
@@ -7,8 +7,14 @@ interface LanguageConfig {
     rate: number;
     name: string;
     nativeName: string;
-    voiceSupport: boolean; 
+    voiceSupport: boolean;
 }
+
+const BASE_LANGUAGES: Omit<LanguageConfig, 'voiceSupport'>[] = [
+    { code: 'en', rate: 0.9, name: 'English', nativeName: 'English' },
+    { code: 'hi', rate: 0.9, name: 'Hindi', nativeName: 'हिन्दी' },
+    { code: 'gu', rate: 0.9, name: 'Gujarati', nativeName: 'ગુજરાતી' },
+];
 
 interface TTSHookReturn {
     speak: (text: string, language?: string, customRate?: number) => boolean;
@@ -30,12 +36,16 @@ const useMultiLanguageTTS = (): TTSHookReturn => {
     const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
     const [currentLanguage, setCurrentLanguage] = useState<string>('en');
 
-    const availableLanguages: LanguageConfig[] = [
-        { code: 'en', rate: 0.9, name: 'English', nativeName: 'English', voiceSupport: true },
-        { code: 'hi', rate: 0.9, name: 'Hindi', nativeName: 'हिन्दी', voiceSupport: true },
-        { code: 'pa', rate: 0.9, name: 'Punjabi', nativeName: 'ਪੰਜਾਬੀ', voiceSupport: true },
-       
-    ];
+    const availableLanguages: LanguageConfig[] = useMemo(() => {
+        return BASE_LANGUAGES.map(lang => ({
+            ...lang,
+            voiceSupport: voices.some(voice =>
+                voice.lang.startsWith(lang.code) ||
+                voice.lang.includes(lang.code)
+            )
+        }));
+    }, [voices]);
+
     useEffect(() => {
         const initTTS = (): void => {
             const supported = 'speechSynthesis' in window;
@@ -50,20 +60,9 @@ const useMultiLanguageTTS = (): TTSHookReturn => {
             const load = () => {
                 const availableVoices = window.speechSynthesis.getVoices();
                 setVoices(availableVoices);
-                updateLanguageSupport(availableVoices);
             };
             load();
             window.speechSynthesis.onvoiceschanged = load;
-        };
-
-        const updateLanguageSupport = (availableVoices: SpeechSynthesisVoice[]): void => {
-            availableLanguages.forEach(lang => {
-                const hasVoice = availableVoices.some(voice =>
-                    voice.lang.startsWith(lang.code) ||
-                    voice.lang.includes(lang.code)
-                );
-                lang.voiceSupport = hasVoice;
-            });
         };
 
         initTTS();
@@ -90,7 +89,7 @@ const useMultiLanguageTTS = (): TTSHookReturn => {
         }
 
         return voice || null;
-    }, [voices]);
+    }, [availableLanguages, voices]);
 
     const translateText = useCallback(async (text: string, targetLanguage: string): Promise<string | null> => {
         if (!text.trim()) return null;
@@ -106,7 +105,7 @@ const useMultiLanguageTTS = (): TTSHookReturn => {
             return text; // Return original text if all providers fail
         } catch (error) {
             toast.error(`Translation failed:, ${error}`);
-            return text; 
+            return text;
         } finally {
             setIsTranslating(false);
         }
@@ -184,7 +183,7 @@ const useMultiLanguageTTS = (): TTSHookReturn => {
         }
 
         try {
-            stop(); 
+            stop();
 
             const langConfig = availableLanguages.find(l => l.code === language) || availableLanguages[0];
             const utterance = new SpeechSynthesisUtterance(text.trim());
@@ -211,7 +210,7 @@ const useMultiLanguageTTS = (): TTSHookReturn => {
             };
 
             utterance.onerror = (event) => {
-                toast.error(event.error)
+                toast.error(event.error);
                 setIsSpeaking(false);
             };
 
@@ -221,7 +220,7 @@ const useMultiLanguageTTS = (): TTSHookReturn => {
             toast.error(`Speak error:, ${error}`);
             return false;
         }
-    }, [isSupported, getVoiceForLanguage, stop]);
+    }, [availableLanguages, isSupported, getVoiceForLanguage, stop]);
 
     const speakTranslated = useCallback(async (text: string, targetLanguage: string): Promise<boolean> => {
         if (!isSupported || !text.trim()) return false;

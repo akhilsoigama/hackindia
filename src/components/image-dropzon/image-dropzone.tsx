@@ -1,10 +1,13 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useDropzone, FileRejection } from 'react-dropzone';
 import imageCompression from 'browser-image-compression';
 import { Box, Typography, IconButton, CircularProgress } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { toast } from 'sonner';
+import { Translated } from '../common/translator/translator';
+import { useTheme } from '@/theme/AppThemeProvider';
 
 interface UploadedImage {
   file: File | null;
@@ -14,48 +17,87 @@ interface UploadedImage {
 }
 
 interface ImageDropZoneProps {
-  value?: string; 
+  value?: string;
   onChange: (url: string) => void;
   placeholderText?: string;
   maxSize?: number;
   height?: string | number;
   width?: string | number;
+  objectFit?: 'cover' | 'contain' | 'fill' | 'scale-down';
 }
 
 const ImageDropZone: React.FC<ImageDropZoneProps> = ({
   value,
   onChange,
-  placeholderText = 'Drag & drop image here, or click to select',
+  placeholderText = <Translated text="Drag & drop image here, or click to select" />,
   maxSize = 5 * 1024 * 1024,
   height = '300px',
   width = '100%',
+  objectFit = 'contain',
 }) => {
   const [image, setImage] = useState<UploadedImage | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const { mode } = useTheme();
+  const isDark = mode === 'dark';
 
-  const uploadToCloudinary = async (file: File): Promise<{ secure_url: string; public_id: string }> => {
+  const uploadToCloudinary = useCallback(async (file: File): Promise<{ secure_url: string; public_id: string }> => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_PRESET || '');
 
+    formData.append('folder', 'nabha-learn');
+    formData.append('tags', 'user_upload');
+
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+    if (!cloudName) {
+      throw new Error('Cloudinary cloud name is not configured');
+    }
+
     const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
-      { method: 'POST', body: formData }
+      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+      {
+        method: 'POST',
+        body: formData,
+        mode: 'cors',
+        credentials: 'omit'
+      }
     );
 
-    if (!response.ok) throw new Error('Failed to upload image to Cloudinary');
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Cloudinary upload error:', errorData);
+      throw new Error(`Cloudinary upload failed: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+    }
+
     return await response.json();
-  };
+  }, []);
 
-  const compressImage = async (file: File): Promise<File> => {
-    const options = { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true };
-    return await imageCompression(file, options);
-  };
+  const compressImage = useCallback(async (file: File): Promise<File> => {
+    try {
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+        fileType: file.type
+      };
+      return await imageCompression(file, options);
+    } catch (error) {
+      console.warn('Image compression failed, using original file:', error);
+      return file;
+    }
+  }, []);
 
-  // ✅ Handle Drop
-  const onDrop = async (acceptedFiles: File[], fileRejections: FileRejection[]) => {
+  const onDrop = useCallback(async (acceptedFiles: File[], fileRejections: FileRejection[]) => {
     if (fileRejections.length > 0) {
-      alert(`Some files were rejected. Max size: ${maxSize / 1024 / 1024}MB`);
+      const rejection = fileRejections[0];
+      if (rejection.errors.some(error => error.code === 'file-too-large')) {
+        toast.error(`${<Translated text="File too large. Max size:" />} ${maxSize / 1024 / 1024}MB`);
+      } else if (rejection.errors.some(error => error.code === 'file-invalid-type')) {
+        toast.error(<Translated text="Invalid file type. Please use JPG, PNG, GIF, or WEBP." />);
+      } else {
+        toast.error(<Translated text="File rejected. Please try another file." />);
+      }
       return;
     }
 
@@ -63,53 +105,88 @@ const ImageDropZone: React.FC<ImageDropZoneProps> = ({
     if (!file) return;
 
     setIsUploading(true);
+    setImageLoaded(false);
 
     try {
-      const compressed = await compressImage(file);
-      const preview = URL.createObjectURL(compressed);
+      const localPreview = URL.createObjectURL(file);
 
       setImage({
-        file: compressed,
-        preview,
+        file: file,
+        preview: localPreview,
         cloudinaryUrl: '',
         publicId: null,
       });
 
+      const compressed = await compressImage(file);
       const cloudinaryResponse = await uploadToCloudinary(compressed);
+
+      const cloudinaryUrl = cloudinaryResponse.secure_url;
+
+      URL.revokeObjectURL(localPreview);
+
       setImage({
         file: compressed,
-        preview,
-        cloudinaryUrl: cloudinaryResponse.secure_url,
+        preview: cloudinaryUrl,
+        cloudinaryUrl: cloudinaryUrl,
         publicId: cloudinaryResponse.public_id,
       });
 
-      onChange(cloudinaryResponse.secure_url);
-    } catch (error) {
+      onChange(cloudinaryUrl);
+      toast.success(<Translated text="Image uploaded successfully!" />);
+    } catch (error: unknown) {
       console.error('Upload error:', error);
+
+      if (image?.preview.startsWith('blob:')) {
+        URL.revokeObjectURL(image.preview);
+      }
+
+      setImage(null);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(<Translated text="Failed to upload image:" /> + ` ${errorMessage}`);
     } finally {
       setIsUploading(false);
     }
-  };
+  }, [maxSize, compressImage, uploadToCloudinary, onChange, image?.preview]);
 
-  // ✅ Remove Image
-  const handleRemove = () => {
-    if (image?.preview && image.file) URL.revokeObjectURL(image.preview);
+  const handleRemove = useCallback((e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+
+    if (image?.preview && image.preview.startsWith('blob:')) {
+      URL.revokeObjectURL(image.preview);
+    }
     setImage(null);
+    setImageLoaded(false);
     onChange('');
-  };
+    toast.info(<Translated text="Image removed" />);
+  }, [onChange, image?.preview]);
 
   useEffect(() => {
-    if (value) {
+    if (value && value !== image?.cloudinaryUrl) {
       setImage({
         file: null,
         preview: value,
         cloudinaryUrl: value,
         publicId: null,
       });
-    } else {
+      setImageLoaded(false);
+    } else if (!value && image) {
+      if (image.preview.startsWith('blob:')) {
+        URL.revokeObjectURL(image.preview);
+      }
       setImage(null);
+      setImageLoaded(false);
     }
-  }, [value]);
+  }, [value, image]);
+
+  useEffect(() => {
+    return () => {
+      if (image?.preview && image.preview.startsWith('blob:')) {
+        URL.revokeObjectURL(image.preview);
+      }
+    };
+  }, [image?.preview]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
@@ -121,78 +198,177 @@ const ImageDropZone: React.FC<ImageDropZoneProps> = ({
     maxSize,
     multiple: false,
     onDrop,
-    disabled: isUploading || !!image,
+    disabled: isUploading,
   });
 
+  const containerDimensions = useMemo(() => ({
+    width: typeof width === 'number' ? `${width}px` : width,
+    height: typeof height === 'number' ? `${height}px` : height,
+  }), [width, height]);
+
   return (
-    <Box sx={{ width, height, position: 'relative' }}>
+    <Box
+      sx={{
+        width: containerDimensions.width,
+        height: containerDimensions.height,
+        position: 'relative',
+        flexShrink: 0,
+      }}
+    >
       <Box
         {...getRootProps()}
         sx={{
           border: '2px dashed',
-          borderRadius: '8px',
+          borderRadius: '16px',
           height: '100%',
-          padding:2,
+          width: '100%',
+          padding: 2,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           textAlign: 'center',
-          cursor: image ? 'not-allowed' : 'pointer',
-          transition: '0.3s',
-          backgroundColor: isDragActive ? 'action.hover' : 'background.paper',
-          borderColor: isDragActive ? 'primary.main' : 'divider',
+          cursor: isUploading ? 'not-allowed' : 'pointer',
+          transition: 'all 0.3s ease',
+          backgroundColor: isUploading
+            ? (isDark ? '#020c1c' : 'background.paper')
+            : isDragActive
+              ? (isDark ? 'rgba(37, 99, 235, 0.16)' : 'action.hover')
+              : (isDark ? '#020c1c' : 'background.paper'),
+          borderColor: isDragActive
+            ? 'primary.main'
+            : (isDark ? 'rgba(148, 163, 184, 0.35)' : 'divider'),
           overflow: 'hidden',
+          position: 'relative',
+          '&:hover': !isUploading ? {
+            backgroundColor: isDark ? '#020c1c' : 'action.hover',
+            borderColor: 'primary.main',
+          } : {},
         }}
       >
         <input {...getInputProps()} />
 
         {isUploading ? (
-          <Box sx={{ textAlign: 'center' }}>
+          <Box sx={{ textAlign: 'center', position: 'absolute', zIndex: 2 }}>
             <CircularProgress size={60} thickness={4} />
-            <Typography variant="body2" sx={{ mt: 1 }}>
-              Uploading...
+            <Typography
+              variant="body2"
+              sx={{
+                mt: 1,
+                color: isDark ? '#e5e7eb' : '#111827',
+                fontWeight: 500,
+              }}
+            >
+              <Translated text="Uploading..." />
             </Typography>
           </Box>
         ) : image ? (
-          <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
+          <Box
+            sx={{
+              width: '100%',
+              height: '100%',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+            }}
+          >
+
+            {!imageLoaded && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: isDark ? '#020c1c' : 'action.hover',
+                  zIndex: 1,
+                }}
+              >
+                <CircularProgress size={40} />
+              </Box>
+            )}
+
             <Box
               component="img"
               src={image.preview}
               alt="Preview"
               sx={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                borderRadius: '8px',
+                maxWidth: '100%',
+                maxHeight: '100%',
+                width: 'auto',
+                height: 'auto',
+                objectFit: objectFit,
+                borderRadius: '12px',
                 border: '1px solid',
-                borderColor: 'divider',
+                borderColor: isDark ? '#020c1c' : 'divider',
+                display: 'block',
+                opacity: imageLoaded ? 1 : 0,
+                transition: 'opacity 0.3s ease',
+                backgroundColor: isDark ? '#020c1c' : 'background.paper',
+              }}
+              crossOrigin='anonymous'
+              loading="eager"
+              onLoad={() => {
+                setImageLoaded(true);
+              }}
+              onError={(e) => {
+                console.error('Image failed to load:', image.preview);
+                const target = e.target as HTMLImageElement;
+
+                if (target.src.startsWith('blob:')) {
+                  target.style.display = 'none';
+                  toast.error(<Translated text="Failed to display image preview" />);
+                } else {
+                  setImageLoaded(true);
+                  toast.error(<Translated text="Failed to load image" />);
+                }
               }}
             />
+
             <IconButton
-              onClick={(e) => {
-                e.stopPropagation();
-                handleRemove();
-              }}
+              onClick={handleRemove}
               sx={{
                 position: 'absolute',
                 top: 8,
                 right: 8,
-                backgroundColor: 'background.paper',
-                '&:hover': { backgroundColor: 'action.hover' },
+                backgroundColor: isDark ? '#020c1c' : 'background.paper',
+                color: isDark ? '#e5e7eb' : '#475569',
+                '&:hover': { backgroundColor: isDark ? '#020c1c' : 'action.hover' },
+                boxShadow: 2,
+                zIndex: 3,
               }}
               size="small"
+              aria-label="Remove image"
             >
               <DeleteIcon color="error" fontSize="small" />
             </IconButton>
           </Box>
         ) : (
-          <Box sx={{ textAlign: 'center' }}>
-            <CloudUploadIcon sx={{ fontSize: 48, color: 'action.active', mb: 1 }} />
-            <Typography variant="body1" color="text.secondary" gutterBottom>
+          <Box sx={{ textAlign: 'center', px: 2 }}>
+            <CloudUploadIcon sx={{ fontSize: 48, color: isDark ? 'rgba(148, 163, 184, 0.9)' : 'action.active', mb: 1 }} />
+            <Typography
+              variant="body1"
+              sx={{
+                color: isDark ? '#f3f4f6' : '#334155',
+                fontWeight: 500,
+              }}
+              gutterBottom
+            >
               {placeholderText}
             </Typography>
-            <Typography variant="caption" color="text.disabled">
-              Supported: JPG, PNG, GIF, WEBP (Max {maxSize / 1024 / 1024}MB)
+            <Typography
+              variant="caption"
+              sx={{
+                color: isDark ? '#cbd5e1' : '#64748b',
+                display: 'inline-block',
+              }}
+            >
+              <Translated text="Supported: JPG, PNG, GIF, WEBP" /> (<Translated text="Max" /> {maxSize / 1024 / 1024}<Translated text="MB" />)
             </Typography>
           </Box>
         )}

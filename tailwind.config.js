@@ -1,0 +1,53 @@
+// tailwind.config.js
+/** @type {import("tailwindcss").Config} */
+module.exports = {
+  darkMode: 'class',
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}",
+    "./public/index.html",
+    // Specific files add करें
+    "./src/components/UserProfile.tsx",
+    "./src/components/ThemeToggle.tsx",
+    "./src/layouts/**/*.{tsx,ts}",
+  ],
+  safelist: [
+    // Force include dark mode classes
+    'dark',
+    'dark:bg-gray-900',
+    'dark:text-gray-100',
+    'dark:border-gray-700',
+    'dark:bg-gray-800',
+    'dark:text-gray-300',
+    'dark:hover:bg-gray-700',
+    'dark:border-gray-800',
+    'dark:bg-gray-700',
+    'dark:text-white',
+    'dark:bg-gray-600',
+    'dark:bg-blue-600',
+    'dark:text-blue-400',
+    'dark:bg-red-900/30',
+    'dark:text-red-400',
+    'dark:border-gray-600',
+    'dark:bg-gray-500',
+    'dark:bg-gray-400',
+    'dark:bg-gray-300',
+    'dark:text-gray-200',
+    'dark:text-gray-400',
+    'dark:text-gray-500',
+    'dark:text-gray-600',
+    'dark:hover:text-gray-200',
+    'dark:active:bg-gray-700',
+    'dark:hover:bg-gray-800',
+    'dark:shadow-gray-900/30',
+    'dark:border-gray-600',
+    'dark:border-transparent',
+    'dark:focus:ring-offset-gray-900',
+    'dark:hover:bg-gray-800/50',
+    'dark:bg-blue-900/20',
+    'dark:bg-blue-900/30',
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};

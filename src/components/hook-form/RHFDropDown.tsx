@@ -1,18 +1,11 @@
 import React from 'react';
 import { useFormContext, Controller, RegisterOptions } from 'react-hook-form';
-import {
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormHelperText,
-  Box,
-  Typography,
-  SelectChangeEvent,
-  styled,
-  alpha
-} from '@mui/material';
-import { KeyboardArrowDown } from '@mui/icons-material';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronDown, Check } from 'lucide-react';
+import { useTheme } from '@/theme/AppThemeProvider';
+import { useEffect, useState } from 'react';
+import { useRef } from 'react';
+import { Translated } from '../common/translator/translator';
 
 interface SelectOption {
   value: string | number;
@@ -22,7 +15,7 @@ interface SelectOption {
 
 interface RHFDropDownProps {
   name: string;
-  label?: string;
+  label: string | React.ReactNode;
   options: SelectOption[];
   placeholder?: string;
   required?: boolean;
@@ -30,100 +23,13 @@ interface RHFDropDownProps {
   className?: string;
   validation?: RegisterOptions;
   value?: string | number;
-  onChange?: (event: SelectChangeEvent<string | number>) => void;
+  onChange?: (event: { target: { name: string; value: string | number } }) => void;
   fullWidth?: boolean;
   size?: 'small' | 'medium';
   variant?: 'outlined' | 'filled' | 'standard';
+  icon?: React.ReactNode;
+  endAdornment?: React.ReactNode;
 }
-
-const StyledFormControl = styled(FormControl)(({ theme }) => ({
-  marginBottom: theme.spacing(3),
-  '& .MuiInputLabel-root': {
-    position: 'relative',
-    transform: 'none',
-    marginBottom: theme.spacing(1),
-    fontSize: '14px',
-    fontWeight: 600,
-    color: theme.palette.text.primary,
-    '&.Mui-focused': {
-      color: theme.palette.primary.main,
-    },
-    '&.Mui-error': {
-      color: theme.palette.error.main,
-    }
-  }
-}));
-
-const StyledSelect = styled(Select, {
-  shouldForwardProp: (prop) => prop !== 'error'
-})<{ error?: boolean }>(({ theme, error }) => ({
-  '& .MuiSelect-select': {
-    padding: '12px 14px',
-    borderRadius: '8px',
-    backgroundColor: theme.palette.background.paper,
-    transition: 'all 0.2s ease-in-out',
-  },
-  
-  '& .MuiOutlinedInput-notchedOutline': {
-    borderColor: error ? theme.palette.error.main : theme.palette.grey[400],
-    borderWidth: '1.5px',
-    transition: 'all 0.2s ease-in-out',
-  },
-  
-  '&:hover .MuiOutlinedInput-notchedOutline': {
-    borderColor: error ? theme.palette.error.main : theme.palette.primary.main,
-  },
-  
-  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-    borderColor: error ? theme.palette.error.main : theme.palette.primary.main,
-    borderWidth: '2px',
-    boxShadow: `0 0 0 4px ${alpha(error ? theme.palette.error.main : theme.palette.primary.main, 0.1)}`,
-  },
-  
-  '&.Mui-disabled': {
-    opacity: 0.6,
-    '& .MuiOutlinedInput-notchedOutline': {
-      borderColor: theme.palette.grey[300],
-    }
-  }
-}));
-
-const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
-  padding: '10px 16px',
-  margin: '2px 8px',
-  borderRadius: '6px',
-  '&:hover': {
-    backgroundColor: alpha(theme.palette.primary.main, 0.08),
-  },
-  '&.Mui-selected': {
-    backgroundColor: alpha(theme.palette.primary.main, 0.12),
-    fontWeight: 500,
-    '&:hover': {
-      backgroundColor: alpha(theme.palette.primary.main, 0.16),
-    }
-  },
-  '&.Mui-disabled': {
-    opacity: 0.5,
-  }
-}));
-
-const RequiredAsterisk = styled('span')(({ theme }) => ({
-  color: theme.palette.error.main,
-  marginLeft: '4px',
-}));
-
-const ErrorMessage = styled(Box)(({ theme }) => ({
-  display: 'inline-flex',
-  alignItems: 'center',
-  backgroundColor: alpha(theme.palette.error.main, 0.08),
-  color: theme.palette.error.main,
-  padding: '4px 12px',
-  borderRadius: '6px',
-  fontSize: '0.75rem',
-  fontWeight: 500,
-  marginTop: '8px',
-  border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
-}));
 
 const RHFDropDown: React.FC<RHFDropDownProps> = ({
   name,
@@ -136,83 +42,121 @@ const RHFDropDown: React.FC<RHFDropDownProps> = ({
   validation = {},
   value: externalValue,
   onChange: externalOnChange,
-  fullWidth = true,
-  size = 'medium',
-  variant = 'outlined',
-  ...props
 }) => {
-  const formContext = useFormContext();
-  
-  // Render menu item content
-  const renderMenuItemContent = (option: SelectOption) => (
-    <Typography 
-      variant="body1"
-      sx={{ 
-        opacity: option.disabled ? 0.6 : 1,
-        fontWeight: option.disabled ? 400 : 500
-      }}
-    >
-      {option.label}
-    </Typography>
-  );
 
-  if (!formContext || externalOnChange) {
+  const { mode } = useTheme();
+  const isDark = mode === 'dark';
+  const labelClass = isDark ? 'text-slate-300' : 'text-slate-800';
+  const errorClass = isDark
+    ? 'mt-2 text-xs font-semibold flex items-center gap-1.5 px-2.5 py-1.5 rounded-md leading-tight text-red-300 bg-red-950/50 border border-red-800/60'
+    : 'mt-2 text-xs font-semibold flex items-center gap-1.5 px-2.5 py-1.5 rounded-md leading-tight text-red-700 bg-red-50 border border-red-200';
+  const dropdownBg = ` w-full px-4 py-3 border ${isDark ? 'border-slate-700' : 'border-slate-400'} font-medium transition-all duration-300 shadow-sm ${isDark ? 'bg-slate-950/70  text-slate-100 placeholder-slate-400 hover:border-slate-500' : 'bg-white border-slate-400 text-slate-900 placeholder-slate-400 hover:border-slate-500'}`;
+  const dropdownErrorBg = isDark
+    ? 'border-red-500 bg-red-950/30 text-red-200 ring-1 ring-red-500/40'
+    : 'border-red-400 bg-red-50 text-red-900 ring-1 ring-red-400/30';
+  const dropdownListBg =isDark ? 'bg-slate-950/70 border-slate-700  shadow-lg' : 'bg-white border-slate-400 shadow-lg';
+  const optionClass =  ` ${isDark
+    ? 'bg-slate-950 hover:bg-slate-700 text-slate-100'
+    : 'bg-white hover:bg-slate-300 text-slate-900'}`;
+  const borderClass = isDark ? 'border-b border-slate-700 ' : 'border-b border-slate-200';
+  const formContext = useFormContext();
+  const [isOpen, setIsOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const [selected, setSelected] = useState(() => {
+    const currentValue = externalValue || '';
+    const found = options.find((opt) => String(opt.value) === String(currentValue));
+    return found ? found.label : placeholder;
+  });
+
+  useEffect(() => {
+    const currentValue = externalValue || '';
+    const found = options.find((opt) => String(opt.value) === String(currentValue));
+    setSelected(found ? found.label : placeholder);
+  }, [externalValue, options, placeholder]);
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent | TouchEvent) => {
+      if (!isOpen) return;
+      const target = event.target as Node | null;
+      if (wrapperRef.current && target && !wrapperRef.current.contains(target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('touchstart', handleOutsideClick);
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+    };
+  }, [isOpen]);
+
+
+  if (!formContext) {
+    const handleSelect = (option: SelectOption) => {
+      setSelected(option.label);
+      setIsOpen(false);
+      externalOnChange?.({
+        target: { name, value: option.value },
+      });
+    };
     return (
-      <StyledFormControl 
-        fullWidth={fullWidth} 
-        className={className}
-        disabled={disabled}
-        error={false}
-      >
-        {label && (
-          <InputLabel shrink htmlFor={name}>
-            {label}
-            {required && <RequiredAsterisk>*</RequiredAsterisk>}
-          </InputLabel>
-        )}
-        
-        <StyledSelect
-          id={name}
-          name={name}
-          value={externalValue || ''}
-          disabled={disabled}
-          size={size}
-          variant={variant}
-          IconComponent={KeyboardArrowDown}
-          displayEmpty
-          MenuProps={{
-            PaperProps: {
-              sx: {
-                maxHeight: 320,
-                marginTop: 1,
-                borderRadius: 2,
-                boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                border: '1px solid',
-                borderColor: 'divider',
-                '& .MuiList-root': {
-                  padding: 1,
-                }
-              }
-            }
-          }}
-          {...props}
-        >
-          <MenuItem value="" disabled>
-            <Typography variant="body1" color="text.secondary">
-              {placeholder}
-            </Typography>
-          </MenuItem>
-          {options.map((option) => (
-            <StyledMenuItem
-              key={option.value}
-              value={option.value}
-              disabled={option.disabled}
-            >
-              {renderMenuItemContent(option)}
-            </StyledMenuItem>
-          ))}
-        </StyledSelect>
-      </StyledFormControl>
+      <div className={className} ref={wrapperRef}>
+        <label htmlFor={name} className={`${labelClass} block text-sm font-semibold mb-3 transition-colors duration-200`}>
+          {typeof label === 'string' ? <Translated text={label} /> : label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </label>
+        <div className="relative">
+          <motion.button
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+            onClick={() => setIsOpen((v) => !v)}
+            className={`w-full px-4 py-3  transition-all duration-300 ${dropdownBg} flex items-center justify-between group`}
+            type="button"
+            id={name}
+            disabled={disabled}
+          >
+            <span className="font-medium"><Translated text={selected} /></span>
+            <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.3 }}>
+              <ChevronDown className="w-5 h-5" />
+            </motion.div>
+          </motion.button>
+          <AnimatePresence>
+            {isOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className={`absolute z-50 mt-2 max-h-64 w-full overflow-y-auto scrollbar-hide overflow-x-hidden rounded-lg border shadow-2xl ${dropdownListBg}`}
+              >
+                {options.map((option, index) => (
+                  <motion.button
+                    key={option.value}
+                    type="button"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.2, delay: index * 0.05 }}
+                    onClick={() => handleSelect(option)}
+                    className={`w-full px-4 py-3 text-left transition-colors duration-200 ${optionClass} flex items-center justify-between group ${
+                      index !== options.length - 1 ? borderClass : ''
+                    }`}
+                    disabled={option.disabled}
+                  >
+                    <span className="font-medium"><Translated text={option.label} /></span>
+                    {selected === option.label && (
+                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 30 }}>
+                        <Check className="w-5 h-5" />
+                      </motion.div>
+                    )}
+                  </motion.button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
     );
   }
 
@@ -224,80 +168,102 @@ const RHFDropDown: React.FC<RHFDropDownProps> = ({
   const error = errors[name];
 
   return (
-    <Controller
-      name={name}
-      control={control}
-      rules={{ 
-        required: required ? 'This field is required' : false, 
-        ...validation 
-      }}
-      render={({ field }) => (
-        <StyledFormControl 
-          fullWidth={fullWidth} 
-          className={className}
-          disabled={disabled}
-          error={!!error}
-        >
-          {label && (
-            <InputLabel shrink htmlFor={name}>
-              {label}
-              {required && <RequiredAsterisk>*</RequiredAsterisk>}
-            </InputLabel>
-          )}
-          
-          <StyledSelect
-            {...field}
-            id={name}
-            disabled={disabled}
-            size={size}
-            variant={variant}
-            value={field.value || ''}
-            error={!!error}
-            IconComponent={KeyboardArrowDown}
-            displayEmpty
-            MenuProps={{
-              PaperProps: {
-                sx: {
-                  maxHeight: 320,
-                  marginTop: 1,
-                  borderRadius: 2,
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  '& .MuiList-root': {
-                    padding: 1,
-                  }
-                }
-              }
-            }}
-            {...props}
-          >
-            <MenuItem value="" disabled>
-              <Typography variant="body1" color="text.secondary">
-                {placeholder}
-              </Typography>
-            </MenuItem>
-            {options.map((option) => (
-              <StyledMenuItem
-                key={option.value}
-                value={option.value}
-                disabled={option.disabled}
+    <div className={className} ref={wrapperRef}>
+      <label htmlFor={name} className={`${labelClass} block text-sm font-semibold mb-3 transition-colors duration-200`}>
+        {typeof label === 'string' ? <Translated text={label} /> : label}
+        {required && <span className="text-red-500 ml-1">*</span>}
+      </label>
+      <Controller
+        name={name}
+        control={control}
+        rules={{
+          required: required ? 'This field is required' : false,
+          ...validation,
+        }}
+        render={({ field }) => {
+          const resolvedValue = externalValue ?? field.value ?? '';
+          const selectedOption = options.find((opt) => String(opt.value) === String(resolvedValue));
+          const handleSelect = (option: SelectOption) => {
+            field.onChange(option.value);
+            externalOnChange?.({
+              target: { name, value: option.value },
+            });
+            setIsOpen(false);
+          };
+          return (
+            <div className="relative">
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() => setIsOpen((v) => !v)}
+                className={`w-full px-4 py-3 rounded-lg transition-all duration-300 ${error ? dropdownErrorBg : dropdownBg} flex items-center justify-between group`}
+                type="button"
+                id={name}
+                disabled={disabled}
               >
-                {renderMenuItemContent(option)}
-              </StyledMenuItem>
-            ))}
-          </StyledSelect>
-          
-          {error && (
-            <FormHelperText error={false}>
-              <ErrorMessage>
-                {error.message as string}
-              </ErrorMessage>
-            </FormHelperText>
-          )}
-        </StyledFormControl>
-      )}
-    />
+                <span className="font-medium"><Translated text={selectedOption ? selectedOption.label : placeholder}/></span>
+                <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.3 }}>
+                  <ChevronDown className="w-5 h-5" />
+                </motion.div>
+              </motion.button>
+              <AnimatePresence>
+                {isOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className={`absolute z-50 mt-2 max-h-64 w-full overflow-y-auto scrollbar-hide overflow-x-hidden rounded-lg border shadow-2xl ${dropdownListBg}`}
+                  >
+                    {options.map((option, index) => (
+                      <motion.button
+                        key={option.value}
+                        type="button"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.2, delay: index * 0.05 }}
+                        onClick={() => handleSelect(option)}
+                        className={`w-full px-4 py-3 text-left transition-colors duration-200 ${optionClass} flex items-center justify-between group ${
+                          index !== options.length - 1 ? borderClass : ''
+                        }`}
+                        disabled={option.disabled}
+                      >
+                        <span className="font-medium"><Translated text={option.label} /></span>
+                        {selectedOption && selectedOption.value === option.value && (
+                          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 30 }}>
+                            <Check className="w-5 h-5" />
+                          </motion.div>
+                        )}
+                      </motion.button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4, height: 0 }}
+                    animate={{ opacity: 1, y: 0, height: 'auto' }}
+                    exit={{ opacity: 0, y: -4, height: 0 }}
+                    transition={{ duration: 0.18, ease: 'easeOut' }}
+                    className={errorClass}
+                  >
+                    <svg fill="currentColor" viewBox="0 0 20 20" className="w-3.5 h-3.5 shrink-0">
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <Translated text={error.message as string}/>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        }}
+      />
+    </div>
   );
 };
 

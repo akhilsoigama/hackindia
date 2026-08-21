@@ -1,21 +1,68 @@
 // types/user.ts
+export type UserAuthType = 'super_admin' | 'institute' | 'faculty' | 'student' | 'admin' | 'jwt';
+export type UserType = 'super_admin' | 'institute' | 'faculty' | 'student';
+
+export interface UserInstituteData {
+  instituteName?: string;
+  instituteCode?: string;
+  establishedYear?: string | number;
+  instituteEmail?: string;
+  institutePhone?: string;
+  instituteAddress?: string;
+  affiliation?: string;
+  instituteWebsite?: string;
+  [key: string]: unknown;
+}
+
+export interface UserFacultyData {
+  facultyName?: string;
+  facultyCode?: string;
+  facultyEmail?: string;
+  facultyPhone?: string;
+  facultyDescription?: string;
+  isActive?: boolean;
+  [key: string]: unknown;
+}
+
+export interface UserData {
+  id?: number;
+  fullName?: string;
+  authType?: UserAuthType;
+  userType?: UserType;
+  roleName?: string;
+  roles?: string[];
+  permissions?: string[] | Record<string, boolean>;
+  instituteId?: number | null;
+  facultyId?: number | null;
+  departmentId?: number | null;
+  email?: string;
+  mobile?: string;
+  isEmailVerified?: boolean;
+  isMobileVerified?: boolean;
+  isActive?: boolean;
+  institute?: UserInstituteData | null;
+  faculty?: UserFacultyData | null;
+  [key: string]: unknown;
+}
+
 export interface User {
   id?: number;
   email?: string;
   fullName?: string;
-  authType?: 'super_admin' | 'institute' | 'faculty' | 'student' | 'admin' | 'jwt';
-  userType?: 'super_admin' | 'institute' | 'faculty' | 'student';
+  authType?: UserAuthType;
+  userType?: UserType;
   mobile?: string;
   instituteId?: number | null;
   facultyId?: number | null;
+  departmentId?: number | null;
   isEmailVerified?: boolean;
   isMobileVerified?: boolean;
   isActive?: boolean;
-  institute?: any;
-  faculty?: any;
+  institute?: UserInstituteData | null;
+  faculty?: UserFacultyData | null;
   createdAt?: string;
   updatedAt?: string;
-  data?: any;
+  data?: UserData;
   
   // Permissions from backend
   roles?: string[];
@@ -32,7 +79,7 @@ export interface User {
 export interface ApiResponse {
   success: boolean;
   authType?: string;
-  data?: User | null;
+  data?: UserData | User | null;
   id: number;
   message?: string;
 }
@@ -66,4 +113,4 @@ export const isStudent = (user: User | null): boolean => {
   return user?.userType === 'student' || user?.authType === 'student';
 };
 
-export type UserRole = 'super_admin' | 'institute' | 'faculty' | 'student' | 'admin' | 'jwt';
+export type UserRole = UserAuthType;

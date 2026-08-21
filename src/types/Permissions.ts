@@ -15,5 +15,5 @@ export interface PermissionsResponse {
 export interface ErrorResponse {
   success: false
   message: string
-  error: any
+  error: unknown
 }

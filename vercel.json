@@ -1,19 +1,43 @@
 {
   "redirects": [
-    {
-      "source": "/",
-      "destination": "/dashboard",
-      "permanent": true
-    }
+    { "source": "/", "destination": "/dashboard", "permanent": true }
   ],
   "rewrites": [
+    { "source": "/dashboard/:path*", "destination": "/index.html" },
+    { "source": "/:path*", "destination": "/index.html" }
+  ],
+  "headers": [
     {
-      "source": "/dashboard/:path*",
-      "destination": "/index.html"
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
+        { "key": "Cross-Origin-Embedder-Policy", "value": "credentialless" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Cross-Origin-Resource-Policy", "value": "cross-origin" }
+      ]
     },
     {
-      "source": "/:path*",
-      "destination": "/index.html"
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" },
+        { "key": "Service-Worker-Allowed", "value": "/" }
+      ]
+    },
+    {
+      "source": "/ffmpeg/(.*)",
+      "headers": [
+        { "key": "Content-Type", "value": "application/wasm" },
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
+        { "key": "Cross-Origin-Embedder-Policy", "value": "credentialless" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
     }
   ]
 }

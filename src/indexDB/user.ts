@@ -9,23 +9,24 @@ export const setUserDB = async (user: User): Promise<void> => {
 
     const tx = db.transaction(USER_STORE, "readwrite");
     const store = tx.objectStore(USER_STORE);
+    const sourceUser = user.data ?? user;
 
     await store.clear();
 
     const userToSave = {
-      id: user.data.id || 1,
-      email: user.data.email ?? "",
-      fullName: user.data.fullName ?? "",
-      userType: user.data.userType ?? "student",
-      authType: user.data.authType ?? "jwt",
-      mobile: user.data.mobile ?? "",
-      instituteId: user.data.instituteId ?? null,
-      facultyId: user.data.facultyId ?? null,
-      isEmailVerified: user.data.isEmailVerified ?? false,
-      isMobileVerified: user.data.isMobileVerified ?? false,
-      isActive: user.data.isActive ?? true,
-      institute: user.data.institute ?? null,
-      faculty: user.data.faculty ?? null,
+      id: sourceUser.id || 1,
+      email: sourceUser.email ?? "",
+      fullName: sourceUser.fullName ?? "",
+      userType: sourceUser.userType ?? "student",
+      authType: sourceUser.authType ?? "jwt",
+      mobile: sourceUser.mobile ?? "",
+      instituteId: sourceUser.instituteId ?? null,
+      facultyId: sourceUser.facultyId ?? null,
+      isEmailVerified: sourceUser.isEmailVerified ?? false,
+      isMobileVerified: sourceUser.isMobileVerified ?? false,
+      isActive: sourceUser.isActive ?? true,
+      institute: sourceUser.institute ?? null,
+      faculty: sourceUser.faculty ?? null,
       createdAt: user.createdAt ?? null,
       updatedAt: user.updatedAt ?? null,
     };

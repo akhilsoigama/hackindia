@@ -5,6 +5,7 @@ import { BsTextParagraph } from 'react-icons/bs';
 import PDFDropZone from '../../../components/common/pdfUploader';
 import axios from 'axios'; // Assuming you use axios
 import { toast } from 'sonner'; // For user feedback
+import { Translated } from '../../../components/common/translator/translator';
 
 interface ReadingFormData {
   title: string;
@@ -33,7 +34,7 @@ const ReadingCreate: React.FC = () => {
 
       if (response.status === 201) {
         setUploadProgress(100);
-        toast.success('Reading material created successfully!');
+        toast.success(<Translated text="Reading material created successfully!" />);
 
         // Wait a moment to show the success message, then reset
         setTimeout(() => {
@@ -48,7 +49,7 @@ const ReadingCreate: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to create reading material:', error);
-      toast.error('Failed to create reading material. Please try again.');
+      toast.error(<Translated text="Failed to create reading material. Please try again." />);
       setUploadProgress(0); // Reset progress on error
     } finally {
       // Set a timeout to ensure the final state of the progress bar is visible
@@ -69,12 +70,13 @@ const ReadingCreate: React.FC = () => {
         >
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6">
-            <h1 className="text-3xl font-bold mb-2">Create New Reading Material</h1>
-            <p className="text-blue-100">{
-              currentStep === 'details' 
-                ? 'Fill in reading material details and upload PDFs' 
-                : 'Review and submit your reading material'
-            }</p>
+            <h1 className="text-3xl font-bold mb-2"><Translated text="Create New Reading Material" /></h1>
+            <p className="text-blue-100">
+              {currentStep === 'details' 
+                ? <Translated text="Fill in reading material details and upload PDFs" /> 
+                : <Translated text="Review and submit your reading material" />
+              }
+            </p>
             
             {/* Progress Steps */}
             <div className="flex items-center mt-6">
@@ -82,14 +84,14 @@ const ReadingCreate: React.FC = () => {
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep === 'details' ? 'bg-blue-800' : 'bg-blue-500'}`}>
                   1
                 </div>
-                <span className="ml-2">Details</span>
+                <span className="ml-2"><Translated text="Details" /></span>
               </div>
               <div className="h-1 w-12 mx-2 bg-blue-500"></div>
               <div className={`flex items-center ${currentStep === 'preview' ? 'text-white' : 'text-blue-200'}`}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep === 'preview' ? 'bg-blue-800' : 'bg-blue-500'}`}>
                   2
                 </div>
-                <span className="ml-2">Submit</span>
+                <span className="ml-2"><Translated text="Submit" /></span>
               </div>
             </div>
           </div>
@@ -108,7 +110,7 @@ const ReadingCreate: React.FC = () => {
                     {/* Title Input */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Reading Material Title *
+                        <Translated text="Reading Material Title" /> *
                       </label>
                       <input
                         type="text"
@@ -123,7 +125,7 @@ const ReadingCreate: React.FC = () => {
                     {/* Description Input */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Description *
+                        <Translated text="Description" /> *
                       </label>
                       <textarea
                         value={formData.description}
@@ -138,7 +140,7 @@ const ReadingCreate: React.FC = () => {
                     {/* File Upload Area */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Upload PDFs *
+                        <Translated text="Upload PDFs" /> *
                       </label>
                       <PDFDropZone
                         value={formData.fileUrls}
@@ -158,7 +160,7 @@ const ReadingCreate: React.FC = () => {
                       disabled={!formData.title || !formData.description || formData.fileUrls.length === 0}
                       className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2"
                     >
-                      <span>Continue to Preview</span>
+                      <span><Translated text="Continue to Preview" /></span>
                       <BiArrowBack className="w-5 h-5 rotate-180" />
                     </motion.button>
                   </form>
@@ -174,30 +176,30 @@ const ReadingCreate: React.FC = () => {
                 >
                   {/* Preview Header */}
                   <div className="flex justify-between items-center pb-4 border-b">
-                    <h2 className="text-2xl font-bold text-gray-800">Reading Material Preview</h2>
+                    <h2 className="text-2xl font-bold text-gray-800"><Translated text="Reading Material Preview" /></h2>
                     <button
                       onClick={() => setCurrentStep('details')}
                       className="text-blue-600 hover:text-blue-800 flex items-center space-x-1"
                     >
                       <BiEdit className="w-4 h-4" />
-                      <span>Edit</span>
+                      <span><Translated text="Edit" /></span>
                     </button>
                   </div>
 
                   {/* Reading Material Details Preview */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="md:col-span-2">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-2">{formData.title}</h3>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-2"><Translated text="Reading Material Title" />: {formData.title}</h3>
                       <p className="text-gray-600 flex items-start">
                         <BsTextParagraph className="w-5 h-5 mr-2 mt-1 flex-shrink-0 text-blue-500" />
-                        <span>{formData.description}</span>
+                        <span><Translated text="Description" />: <Translated text={formData.description} /></span>
                       </p>
                     </div>
                     
                     <div className="bg-gray-50 rounded-lg p-4">
                       <div className="space-y-3">
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Files:</span>
+                          <span className="text-gray-600"><Translated text="Files" />:</span>
                           <span className="font-medium">{formData.fileUrls.length}</span>
                         </div>
                       </div>
@@ -207,7 +209,7 @@ const ReadingCreate: React.FC = () => {
                   {/* Files Preview */}
                   {formData.fileUrls.length > 0 && (
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4">Uploaded PDFs</h3>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4"><Translated text="Uploaded PDFs" /></h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {formData.fileUrls.map((url, index) => (
                           <motion.div
@@ -243,12 +245,12 @@ const ReadingCreate: React.FC = () => {
                     {isUploading ? (
                       <>
                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Uploading... {uploadProgress}%</span>
+                        <span><Translated text="Uploading" />... {uploadProgress}%</span>
                       </>
                     ) : (
                       <>
                         <BiPlus className="w-5 h-5" />
-                        <span>Publish Reading Material</span>
+                        <span><Translated text="Publish Reading Material" /></span>
                       </>
                     )}
                   </motion.button>
@@ -267,8 +269,8 @@ const ReadingCreate: React.FC = () => {
                 >
                   <BiCheckCircle className="w-6 h-6 text-green-600" />
                   <div>
-                    <p className="font-medium text-green-800">Upload Successful!</p>
-                    <p className="text-sm text-green-600">Your reading material has been published successfully.</p>
+                    <p className="font-medium text-green-800"><Translated text="Upload Successful" />!</p>
+                    <p className="text-sm text-green-600"><Translated text="Your reading material has been published successfully" />.</p>
                   </div>
                 </motion.div>
               )}

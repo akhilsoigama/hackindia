@@ -1,0 +1,642 @@
+import { useState } from 'react'
+import { useTheme } from '@/theme/AppThemeProvider'
+import { useRouter } from '@/hooks/useRouter'
+import {
+    AccessTime,
+    MenuBook,
+    School,
+    Gavel,
+    AccountBalance,
+    HealthAndSafety,
+    Engineering,
+    Business,
+    EmojiEvents,
+    WorkspacePremium,
+    PlayArrow,
+    Close,
+} from '@mui/icons-material'
+import { ParticleButton } from "../../../components/ui/particle-button"
+import { cn } from '@/utils/utils'
+
+// Nested Component - Exam Detail View
+const ExamDetail = ({ topic, onClose }: { topic: any, onClose: () => void }) => {
+    const { mode } = useTheme()
+    const isDark = mode === 'dark'
+    const router = useRouter()
+
+    const handleStartPreparation = () => {
+        router.push(`/exam/${topic.slug}`)
+    }
+
+    const getLevelColor = (level: string) => {
+        if (isDark) {
+            switch (level) {
+                case 'Beginner': return 'bg-green-900/30 text-green-300 border-green-400/20'
+                case 'Intermediate': return 'bg-yellow-900/30 text-yellow-300 border-yellow-400/20'
+                case 'Advanced': return 'bg-red-900/30 text-red-300 border-red-400/20'
+                default: return 'bg-gray-700 text-gray-300'
+            }
+        } else {
+            switch (level) {
+                case 'Beginner': return 'bg-green-100 text-green-700 border-green-200'
+                case 'Intermediate': return 'bg-yellow-100 text-yellow-700 border-yellow-200'
+                case 'Advanced': return 'bg-red-100 text-red-700 border-red-200'
+                default: return 'bg-gray-100 text-gray-700'
+            }
+        }
+    }
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className={cn(
+                "relative max-w-2xl w-full rounded-2xl p-6 shadow-2xl",
+                isDark ? "bg-slate-900 border border-slate-700" : "bg-white border border-slate-200"
+            )}>
+                {/* Close Button - Top Right */}
+                <button
+                    onClick={onClose}
+                    className={cn(
+                        "absolute top-4 right-4 z-10 p-2 rounded-lg transition-colors",
+                        isDark ? "hover:bg-slate-800 text-slate-400 hover:text-white" : "hover:bg-slate-100 text-slate-600 hover:text-slate-900"
+                    )}
+                >
+                    <Close fontSize="medium" />
+                </button>
+
+                {/* Header: Icon + Status + Level */}
+                <div className="flex items-start justify-between mb-4 pr-10">
+                    <div className={cn(
+                        "flex h-14 w-14 items-center justify-center rounded-2xl",
+                        isDark ? "bg-slate-800 text-slate-300" : "bg-slate-100 text-slate-600"
+                    )}>
+                        {topic.icon}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span className={cn(
+                            "px-3 py-1 rounded-full text-xs font-medium border",
+                            isDark ? "bg-slate-800 text-slate-300 border-slate-700" : "bg-slate-100 text-slate-600 border-slate-200"
+                        )}>
+                            {topic.status}
+                        </span>
+                        <span className={cn(
+                            "px-3 py-1 rounded-full text-xs font-medium border",
+                            getLevelColor(topic.level)
+                        )}>
+                            {topic.level}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Title */}
+                <h2 className={cn(
+                    "text-2xl font-bold mb-2",
+                    isDark ? "text-white" : "text-slate-900"
+                )}>
+                    {topic.title}
+                </h2>
+
+                {/* Description */}
+                <p className={cn(
+                    "text-base mb-6",
+                    isDark ? "text-slate-400" : "text-slate-600"
+                )}>
+                    {topic.description}
+                </p>
+
+                {/* Details Grid */}
+                <div className={cn(
+                    "grid grid-cols-3 gap-4 p-4 rounded-xl mb-6",
+                    isDark ? "bg-slate-800/50" : "bg-slate-50"
+                )}>
+                    <div className="text-center">
+                        <p className={cn(
+                            "text-2xl font-bold",
+                            isDark ? "text-white" : "text-slate-900"
+                        )}>{topic.duration}</p>
+                        <p className={cn(
+                            "text-xs",
+                            isDark ? "text-slate-400" : "text-slate-500"
+                        )}>Preparation</p>
+                    </div>
+                    <div className="text-center">
+                        <p className={cn(
+                            "text-2xl font-bold",
+                            isDark ? "text-white" : "text-slate-900"
+                        )}>{topic.lessons}</p>
+                        <p className={cn(
+                            "text-xs",
+                            isDark ? "text-slate-400" : "text-slate-500"
+                        )}>Modules</p>
+                    </div>
+                    <div className="text-center">
+                        <p className={cn(
+                            "text-2xl font-bold",
+                            isDark ? "text-white" : "text-slate-900"
+                        )}>{topic.students}</p>
+                        <p className={cn(
+                            "text-xs",
+                            isDark ? "text-slate-400" : "text-slate-500"
+                        )}>Aspirants</p>
+                    </div>
+                </div>
+
+                {/* Tags */}
+                <div className="flex flex-wrap gap-2 mb-6">
+                    {topic.tags?.map((tag: string, i: number) => (
+                        <span
+                            key={`${tag}-${i}`}
+                            className={cn(
+                                "rounded-md px-3 py-1 text-xs font-medium",
+                                isDark ? "bg-slate-800 text-slate-300" : "bg-slate-100 text-slate-600"
+                            )}
+                        >
+                            #{tag}
+                        </span>
+                    ))}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3">
+                    <ParticleButton
+                        type="button"
+                        className={cn(
+                            "flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium transition-all",
+                            "bg-gradient-to-r from-blue-500 to-teal-500 text-white hover:shadow-lg hover:shadow-blue-500/25"
+                        )}
+                        successDuration={600}
+                        onClick={handleStartPreparation}
+                    >
+                        <PlayArrow fontSize="small" />
+                        Start Preparation
+                    </ParticleButton>
+                    <ParticleButton
+                        type="button"
+                        className={cn(
+                            "px-6 py-3 rounded-xl font-medium transition-all",
+                            isDark 
+                                ? "bg-slate-800 text-slate-300 hover:bg-slate-700" 
+                                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        )}
+                        successDuration={600}
+                        onClick={onClose}
+                    >
+                        Close
+                    </ParticleButton>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+const GovernmentExamsList = () => {
+    const { mode } = useTheme()
+    const isDark = mode === 'dark'
+
+    const [selectedTopic, setSelectedTopic] = useState<any>(null)
+
+    const topics = [
+        {
+            id: 1,
+            title: 'UPSC Civil Services',
+            level: 'Advanced',
+            duration: '12 months',
+            lessons: 45,
+            students: 12500,
+            description: 'Complete preparation for UPSC Civil Services Examination (IAS, IPS, IFS)',
+            icon: <Gavel fontSize="small" />,
+            status: 'Popular',
+            tags: ['UPSC', 'Civil Services', 'IAS'],
+            slug: 'upsc-civil-services',
+        },
+        {
+            id: 2,
+            title: 'Bank PO & Clerk',
+            level: 'Intermediate',
+            duration: '6 months',
+            lessons: 35,
+            students: 8900,
+            description: 'Comprehensive preparation for SBI, IBPS, and other bank exams',
+            icon: <AccountBalance fontSize="small" />,
+            status: 'Trending',
+            tags: ['Banking', 'SBI', 'IBPS'],
+            slug: 'bank-po-clerk',
+        },
+        {
+            id: 3,
+            title: 'SSC CGL & CHSL',
+            level: 'Intermediate',
+            duration: '8 months',
+            lessons: 40,
+            students: 7600,
+            description: 'Complete preparation for Staff Selection Commission exams',
+            icon: <WorkspacePremium fontSize="small" />,
+            status: 'Popular',
+            tags: ['SSC', 'CGL', 'Government Jobs'],
+            slug: 'ssc-cgl-chsl',
+        },
+        {
+            id: 4,
+            title: 'State PSC Exams',
+            level: 'Advanced',
+            duration: '10 months',
+            lessons: 48,
+            students: 5600,
+            description: 'Preparation for various State Public Service Commission exams',
+            icon: <Gavel fontSize="small" />,
+            status: 'Top Rated',
+            tags: ['State PSC', 'State Services', 'MPSC'],
+            slug: 'state-psc-exams',
+        },
+        {
+            id: 5,
+            title: 'Railway Recruitment',
+            level: 'Beginner',
+            duration: '4 months',
+            lessons: 28,
+            students: 9800,
+            description: 'Preparation for RRB NTPC, Group D, and other railway exams',
+            icon: <Engineering fontSize="small" />,
+            status: 'Active',
+            tags: ['Railway', 'RRB', 'NTPC'],
+            slug: 'railway-recruitment',
+        },
+        {
+            id: 6,
+            title: 'Teaching Exams',
+            level: 'Intermediate',
+            duration: '5 months',
+            lessons: 32,
+            students: 6700,
+            description: 'Preparation for CTET, UPTET, DSSSB, and other teaching exams',
+            icon: <School fontSize="small" />,
+            status: 'Popular',
+            tags: ['Teaching', 'CTET', 'DSSSB'],
+            slug: 'teaching-exams',
+        },
+        {
+            id: 7,
+            title: 'Police & Defense',
+            level: 'Intermediate',
+            duration: '6 months',
+            lessons: 38,
+            students: 5400,
+            description: 'Preparation for police, defense, and paramilitary forces exams',
+            icon: <HealthAndSafety fontSize="small" />,
+            status: 'Trending',
+            tags: ['Police', 'Defense', 'Paramilitary'],
+            slug: 'police-defense',
+        },
+        {
+            id: 8,
+            title: 'Insurance Exams',
+            level: 'Intermediate',
+            duration: '5 months',
+            lessons: 30,
+            students: 4500,
+            description: 'Preparation for LIC, GIC, and other insurance sector exams',
+            icon: <Business fontSize="small" />,
+            status: 'New',
+            tags: ['Insurance', 'LIC', 'GIC'],
+            slug: 'insurance-exams',
+        },
+        {
+            id: 9,
+            title: 'MBA Entrance Exams',
+            level: 'Advanced',
+            duration: '8 months',
+            lessons: 42,
+            students: 8200,
+            description: 'Preparation for CAT, MAT, XAT, and other MBA entrance exams',
+            icon: <Business fontSize="small" />,
+            status: 'Top Rated',
+            tags: ['MBA', 'CAT', 'Management'],
+            slug: 'mba-entrance-exams',
+        },
+        {
+            id: 10,
+            title: 'Judiciary Exams',
+            level: 'Advanced',
+            duration: '10 months',
+            lessons: 50,
+            students: 3200,
+            description: 'Complete preparation for Judicial Services and law entrance exams',
+            icon: <Gavel fontSize="small" />,
+            status: 'Advanced',
+            tags: ['Judiciary', 'Law', 'Legal'],
+            slug: 'judiciary-exams',
+        },
+        {
+            id: 11,
+            title: 'Engineering Services',
+            level: 'Advanced',
+            duration: '9 months',
+            lessons: 44,
+            students: 4800,
+            description: 'Preparation for IES, GATE, and other engineering services exams',
+            icon: <Engineering fontSize="small" />,
+            status: 'Popular',
+            tags: ['Engineering', 'IES', 'GATE'],
+            slug: 'engineering-services',
+        },
+        {
+            id: 12,
+            title: 'Post Office Exams',
+            level: 'Beginner',
+            duration: '3 months',
+            lessons: 22,
+            students: 7200,
+            description: 'Preparation for India Post and postal department exams',
+            icon: <EmojiEvents fontSize="small" />,
+            status: 'Active',
+            tags: ['Post Office', 'India Post', 'Postal'],
+            slug: 'post-office-exams',
+        },
+    ]
+
+    const handleCardClick = (topic: any) => {
+        setSelectedTopic(topic)
+    }
+
+    const handleCloseDetail = () => {
+        setSelectedTopic(null)
+    }
+
+    const getLevelColor = (level: string) => {
+        if (isDark) {
+            switch (level) {
+                case 'Beginner': return 'bg-green-900/30 text-green-300'
+                case 'Intermediate': return 'bg-yellow-900/30 text-yellow-300'
+                case 'Advanced': return 'bg-red-900/30 text-red-300'
+                default: return 'bg-gray-700 text-gray-300'
+            }
+        } else {
+            switch (level) {
+                case 'Beginner': return 'bg-green-100 text-green-700'
+                case 'Intermediate': return 'bg-yellow-100 text-yellow-700'
+                case 'Advanced': return 'bg-red-100 text-red-700'
+                default: return 'bg-gray-100 text-gray-700'
+            }
+        }
+    }
+
+    return (
+        <div className={cn(
+            "min-h-screen transition-colors duration-300",
+            isDark ? 'bg-gray-900' : 'bg-white'
+        )}>
+            <div className="max-w-7xl mx-auto px-4 py-8">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-8">
+                    <div>
+                        <h1 className={cn(
+                            "text-3xl font-bold",
+                            isDark ? "text-slate-100" : "text-slate-950/70"
+                        )}>
+                            Government Exams
+                        </h1>
+                        <p className={cn(
+                            "text-sm",
+                            isDark ? 'text-gray-400' : 'text-gray-500'
+                        )}>
+                            Complete preparation for various government competitive exams
+                        </p>
+                    </div>
+                    <ParticleButton
+                        type="button"
+                        className={cn(
+                            "flex items-center px-4 py-2 border rounded-lg text-sm font-medium",
+                            isDark ? "text-slate-200 bg-slate-900 border-slate-800 hover:bg-slate-800" : "text-slate-700 bg-white border-slate-200 hover:bg-slate-50"
+                        )}
+                        successDuration={600}
+                    >
+                        Start Preparation
+                    </ParticleButton>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div className={cn(
+                        "p-4 rounded-lg border",
+                        isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'
+                    )}>
+                        <p className={cn(
+                            "text-2xl font-bold",
+                            isDark ? 'text-white' : 'text-gray-900'
+                        )}>12+</p>
+                        <p className={cn(
+                            "text-sm",
+                            isDark ? 'text-gray-400' : 'text-gray-500'
+                        )}>Exam Categories</p>
+                    </div>
+                    <div className={cn(
+                        "p-4 rounded-lg border",
+                        isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'
+                    )}>
+                        <p className={cn(
+                            "text-2xl font-bold",
+                            isDark ? 'text-white' : 'text-gray-900'
+                        )}>50K</p>
+                        <p className={cn(
+                            "text-sm",
+                            isDark ? 'text-gray-400' : 'text-gray-500'
+                        )}>Aspirants</p>
+                    </div>
+                    <div className={cn(
+                        "p-4 rounded-lg border",
+                        isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'
+                    )}>
+                        <p className={cn(
+                            "text-2xl font-bold",
+                            isDark ? 'text-white' : 'text-gray-900'
+                        )}>450+</p>
+                        <p className={cn(
+                            "text-sm",
+                            isDark ? 'text-gray-400' : 'text-gray-500'
+                        )}>Modules</p>
+                    </div>
+                    <div className={cn(
+                        "p-4 rounded-lg border",
+                        isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'
+                    )}>
+                        <p className={cn(
+                            "text-2xl font-bold",
+                            isDark ? 'text-white' : 'text-gray-900'
+                        )}>88%</p>
+                        <p className={cn(
+                            "text-sm",
+                            isDark ? 'text-gray-400' : 'text-gray-500'
+                        )}>Success Rate</p>
+                    </div>
+                </div>
+
+                {/* Filter Buttons */}
+                <div className="flex flex-wrap gap-2 mb-6">
+                    {['All', 'Beginner', 'Intermediate', 'Advanced'].map((filter) => (
+                        <ParticleButton
+                            key={filter}
+                            type="button"
+                            className={cn(
+                                "flex items-center px-4 py-2 border rounded-lg text-sm font-medium",
+                                filter === 'All'
+                                    ? isDark
+                                        ? "text-slate-200 bg-slate-800 border-slate-700 hover:bg-slate-700"
+                                        : "text-slate-700 bg-slate-100 border-slate-200 hover:bg-slate-200"
+                                    : isDark
+                                        ? "text-slate-200 bg-slate-900 border-slate-800 hover:bg-slate-800"
+                                        : "text-slate-700 bg-white border-slate-200 hover:bg-slate-50"
+                            )}
+                            successDuration={600}
+                        >
+                            {filter}
+                        </ParticleButton>
+                    ))}
+                </div>
+
+                {/* Topics Grid with Card Pattern */}
+                <div className={cn(
+                    "mx-auto grid max-w-7xl grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
+                )}>
+                    {topics.map((topic, index) => (
+                        <div
+                            key={`${topic.title}-${index}`}
+                            className={cn(
+                                "group relative overflow-hidden rounded-xl p-6 text-left transition-all duration-300",
+                                "border will-change-transform",
+                                isDark
+                                    ? "border-slate-800 bg-slate-900/50 hover:border-teal-500/30 hover:bg-slate-900/80 hover:shadow-xl hover:shadow-teal-500/5"
+                                    : "border-slate-200 bg-white hover:shadow-lg hover:shadow-teal-100/20",
+                                "hover:-translate-y-0.5 cursor-pointer"
+                            )}
+                            onClick={() => handleCardClick(topic)}
+                        >
+                            {/* Background Pattern */}
+                            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <div className={cn(
+                                    "absolute inset-0 bg-size[4px_4px]",
+                                    isDark
+                                        ? "bg-[radial-linear(circle_at_center,rgba(255,255,255,0.02)_1px,transparent_1px)]"
+                                        : "bg-[radial-linear(circle_at_center,rgba(0,0,0,0.02)_1px,transparent_1px)]"
+                                )} />
+                            </div>
+
+                            {/* Content */}
+                            <div className="relative flex flex-col space-y-3">
+                                {/* Header: Icon + Status + Level */}
+                                <div className="flex items-center justify-between">
+                                    <div className={cn(
+                                        "flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-300",
+                                        isDark
+                                            ? "bg-slate-800 text-slate-300"
+                                            : "bg-slate-100 text-slate-600 group-hover:bg-teal-50"
+                                    )}>
+                                        {topic.icon}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className={cn(
+                                            "rounded-lg px-2.5 py-1 text-xs font-medium backdrop-blur-sm transition-colors duration-300",
+                                            isDark
+                                                ? "bg-slate-800 text-slate-300"
+                                                : "bg-slate-100 text-slate-600 group-hover:bg-teal-50"
+                                        )}>
+                                            {topic.status}
+                                        </span>
+                                        <span className={cn(
+                                            "px-2.5 py-1 rounded-full text-xs font-medium",
+                                            getLevelColor(topic.level)
+                                        )}>
+                                            {topic.level}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Title & Description */}
+                                <div className="space-y-2">
+                                    <h3 className={cn(
+                                        "text-[15px] font-medium tracking-tight",
+                                        isDark ? "text-white" : "text-slate-900"
+                                    )}>
+                                        {topic.title}
+                                        <span className={cn(
+                                            "ml-2 text-xs font-normal",
+                                            isDark ? "text-slate-400" : "text-slate-500"
+                                        )}>
+                                            {topic.lessons} modules
+                                        </span>
+                                    </h3>
+                                    <p className={cn(
+                                        "text-sm leading-snug",
+                                        isDark ? "text-slate-400" : "text-slate-600"
+                                    )}>
+                                        {topic.description}
+                                    </p>
+                                </div>
+
+                                {/* Duration, Modules, Aspirants */}
+                                <div className="flex items-center gap-4 text-xs">
+                                    <div className="flex items-center gap-1">
+                                        <AccessTime fontSize="small" className="h-3 w-3" />
+                                        <span className={isDark ? "text-slate-400" : "text-slate-500"}>{topic.duration}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <MenuBook fontSize="small" className="h-3 w-3" />
+                                        <span className={isDark ? "text-slate-400" : "text-slate-500"}>{topic.lessons} modules</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <School fontSize="small" className="h-3 w-3" />
+                                        <span className={isDark ? "text-slate-400" : "text-slate-500"}>{topic.students} aspirants</span>
+                                    </div>
+                                </div>
+
+                                {/* Tags */}
+                                <div className="flex flex-wrap items-center gap-2 text-xs mt-1">
+                                    {topic.tags?.map((tag, i) => (
+                                        <span
+                                            key={`${tag}-${i}`}
+                                            className={cn(
+                                                "rounded-md px-2 py-1 backdrop-blur-sm transition-all duration-200",
+                                                isDark
+                                                    ? "bg-slate-800 text-slate-300"
+                                                    : "bg-slate-100 text-slate-600 hover:bg-teal-50"
+                                            )}
+                                        >
+                                            #{tag}
+                                        </span>
+                                    ))}
+                                </div>
+
+                                {/* Click to view detail indicator */}
+                                <div className="mt-1 text-xs flex items-center gap-1 text-teal-500">
+                                    <span>Click to view details</span>
+                                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </div>
+                            </div>
+
+                            {/* Border linear */}
+                            <div
+                                className={cn(
+                                    "absolute inset-0 -z-10 rounded-xl p-px transition-opacity duration-300",
+                                    isDark
+                                        ? "bg-linear-to-br from-transparent via-teal-500/20 to-transparent"
+                                        : "bg-linear-to-br from-transparent via-teal-300/30 to-transparent",
+                                    "opacity-0 group-hover:opacity-100"
+                                )}
+                            />
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Nested Detail Component - Shows when card is clicked */}
+            {selectedTopic && (
+                <ExamDetail 
+                    topic={selectedTopic} 
+                    onClose={handleCloseDetail} 
+                />
+            )}
+        </div>
+    )
+}
+
+export default GovernmentExamsList

@@ -1,4 +1,4 @@
-import React, { ReactElement, isValidElement, cloneElement } from 'react';
+import React, { ReactElement, isValidElement, cloneElement, useRef } from 'react';
 import { useFormContext, Controller, RegisterOptions } from 'react-hook-form';
 import {
   TextField,
@@ -8,12 +8,16 @@ import {
   TextFieldProps,
 } from '@mui/material';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Input } from '../ui/input';
+import { Translated } from '../common/translator/translator';
+import { useTheme } from '@/theme/AppThemeProvider';
+
 
 interface RHFFormFieldProps {
   name: string;
-  label: string;
-  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'date' | 'time' | 'datetime-local' | 'file';
-  placeholder?: string;
+  label: string | React.ReactNode;
+  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'date' | 'time' | 'datetime-local' | 'file' | 'textarea';
+  placeholder?: string | React.ReactNode;
   required?: boolean;
   disabled?: boolean;
   className?: string;
@@ -32,6 +36,12 @@ interface RHFFormFieldProps {
 
   InputProps?: TextFieldProps['InputProps'];
   InputLabelProps?: TextFieldProps['InputLabelProps'];
+  hideDateIndicator?: boolean;
+  hideTimeIndicator?: boolean;
+  maxLength?: number;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode'];
+  pattern?: string;
+  onInput?: React.FormEventHandler<HTMLInputElement | HTMLTextAreaElement>;
 }
 
 const RHFFormField: React.FC<RHFFormFieldProps> = ({
@@ -55,16 +65,39 @@ const RHFFormField: React.FC<RHFFormFieldProps> = ({
   fullWidth = true,
   InputProps,
   InputLabelProps,
+  hideDateIndicator = false,
+  hideTimeIndicator = false,
+  maxLength,
+  inputMode,
+  pattern,
+  onInput,
+
   ...props
 }) => {
   const { control, formState: { errors } } = useFormContext();
   const error = errors[name];
+  const { mode } = useTheme();
+  const isDark = mode === 'dark';
+  const dateInputRef = useRef<HTMLInputElement | null>(null);
+  const normalizedPlaceholder = typeof placeholder === 'string' ? placeholder : '';
+  const showCustomDateAdornment = type === 'date' && !hideDateIndicator && !endAdornment;
+  const showCustomTimeAdornment = type === 'time' && !hideTimeIndicator && !endAdornment;
+
+  const openDatePicker = () => {
+    const inputEl = dateInputRef.current;
+    if (!inputEl) return;
+
+    inputEl.focus();
+    if (typeof inputEl.showPicker === 'function') {
+      inputEl.showPicker();
+    }
+  };
 
   const renderIcon = (el: React.ReactNode) => {
     if (isValidElement(el)) {
       const element = el as ReactElement<{ sx?: SxProps<Theme> }>;
       return cloneElement(element, {
-        sx: { ...(element.props.sx || {}), color: 'rgb(55,65,81)', fontSize: '20px' },
+        sx: { ...(element.props.sx || {}), color: isDark ? '#fff' : 'rgb(55,65,81)', fontSize: '20px' },
       });
     }
     return el;
@@ -82,11 +115,13 @@ const RHFFormField: React.FC<RHFFormFieldProps> = ({
             <TextField
               {...field}
               fullWidth={fullWidth}
-              type={type}
-              label={label}
-              placeholder={placeholder}
+              type={type === 'textarea' ? 'text' : type}
+              label={typeof label === 'string' ? <Translated text={label} /> : label}
+              placeholder={normalizedPlaceholder}
               disabled={disabled}
               required={required}
+              multiline={type === 'textarea'}
+              rows={type === 'textarea' ? 4 : undefined}
               variant={variant}
               size={size}
               error={!!error}
@@ -107,6 +142,9 @@ const RHFFormField: React.FC<RHFFormFieldProps> = ({
                 inputProps: {
                   min,
                   max,
+                  maxLength,
+                  inputMode,
+                  pattern,
                   ...props,
                 },
                 ...InputProps,
@@ -126,9 +164,9 @@ const RHFFormField: React.FC<RHFFormFieldProps> = ({
     <div className={`mb-5 ${className}`}>
       <label
         htmlFor={name}
-        className="block text-sm font-semibold text-gray-700 mb-3 transition-colors duration-200"
+        className={`block text-sm font-semibold mb-3 transition-colors duration-200 ${isDark ? 'text-slate-300' : 'text-slate-800'}`}
       >
-        {label}
+        {typeof label === 'string' ? <Translated text={label} /> : label}
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
 
@@ -139,38 +177,138 @@ const RHFFormField: React.FC<RHFFormFieldProps> = ({
         render={({ field }) => (
           <div className="relative">
             {icon && (
-              <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400 transition-colors duration-200">
+              <span className={`absolute left-0 pl-4 transition-colors duration-200 ${type === 'textarea' ? 'top-3' : 'inset-y-0 flex items-center'} ${isDark ? 'text-white' : 'text-slate-500'}`}>
                 {icon}
               </span>
             )}
-            <input
-              {...field}
-              type={type}
-              id={name}
-              placeholder={placeholder}
-              disabled={disabled}
-              autoComplete={autoComplete}
-              min={min}
-              max={max}
-              className={`
-                w-full px-4 py-4 border-2 rounded-xl
-                focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500
-                transition-all duration-300 ease-in-out
-                ${error
-                  ? 'border-red-400 text-red-900 placeholder-red-300 bg-red-50'
-                  : 'border-gray-200 placeholder-gray-400 bg-white hover:border-gray-300'
-                }
-                ${disabled ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}
-                ${icon ? 'pl-12' : 'pl-4'}
-                ${endAdornment ? 'pr-12' : 'pr-4'}
-                shadow-sm
-              `}
-              {...props}
-            />
+            {type === 'textarea' ? (
+              <textarea
+                {...field}
+                value={field.value ?? ''}
+                id={name}
+                placeholder={normalizedPlaceholder}
+                disabled={disabled}
+                rows={4}
+                className={`
+                  w-full rounded-md border py-2 text-sm transition-colors duration-200 outline-none
+                  ${icon ? 'pl-12' : 'pl-4'}
+                  ${endAdornment ? 'pr-12' : 'pr-4'}
+                  ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+                  ${error
+                    ? isDark
+                      ? 'border-red-500 bg-red-950/30 text-red-200 placeholder-red-400/60 ring-1 ring-red-500/40'
+                      : 'border-red-400 bg-red-50 text-red-900 placeholder-red-300 ring-1 ring-red-400/30'
+                    : isDark
+                      ? 'bg-slate-950/70 border-slate-700 text-slate-100 placeholder-slate-400'
+                      : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 hover:border-slate-300'
+                  }
+                `}
+              />
+            ) : (
+              <Input
+                {...field}
+                value={field.value ?? ''}
+                type={type}
+                onChange={(event) => {
+                  if (type === 'number') {
+                    const rawValue = event.target.value;
+                    field.onChange(rawValue === '' ? undefined : Number(rawValue));
+                    return;
+                  }
+                  field.onChange(event);
+                }}
+                ref={(el) => {
+                  dateInputRef.current = el;
+                  field.ref(el);
+                }}
+                id={name}
+                placeholder={normalizedPlaceholder}
+                disabled={disabled}
+                autoComplete={autoComplete}
+                min={min}
+                max={max}
+                maxLength={maxLength}
+                inputMode={inputMode}
+                pattern={pattern}
+                onInput={onInput}
+                className={`
+                  ${icon ? 'pl-12' : 'pl-4'}
+                  ${endAdornment || showCustomDateAdornment || showCustomTimeAdornment ? 'pr-12' : 'pr-4'}
+                  ${type === 'date' ? 'scheme-light dark:scheme-dark' : ''}
+                  ${type === 'time' ? 'scheme-light dark:scheme-dark' : ''}
+                  ${showCustomDateAdornment ? '[&::-webkit-calendar-picker-indicator]:hidden [appearance:textfield]' : ''}
+                  ${hideDateIndicator && type === 'date' ? '[&::-webkit-calendar-picker-indicator]:hidden [appearance:textfield]' : ''}
+                  ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+                  ${showCustomTimeAdornment ? '[&::-webkit-calendar-picker-indicator]:hidden [appearance:textfield]' : ''}
+                  ${hideTimeIndicator && type === 'time' ? '[&::-webkit-calendar-picker-indicator]:hidden [appearance:textfield]' : ''}
+                  ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+                  ${error
+                    ? isDark
+                      ? 'border-red-500 bg-red-950/30 text-red-200 placeholder-red-400/60 ring-1 ring-red-500/40'
+                      : 'border-red-400 bg-red-50 text-red-900 placeholder-red-300 ring-1 ring-red-400/30'
+                    : isDark
+                      ? 'bg-slate-950/70 border-slate-700 text-slate-100 placeholder-slate-400'
+                      : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 hover:border-slate-300'
+                  }
+                `}
+                {...props}
+              />
+            )}
+
+            {showCustomDateAdornment && (
+              <button
+                type="button"
+                onClick={openDatePicker}
+                className={`absolute inset-y-0 right-0 flex items-center pr-3 ${isDark ? 'text-slate-200' : 'text-slate-600'}`}
+                aria-label="Open calendar"
+                tabIndex={-1}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4.5 w-4.5"
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+              </button>
+            )}
+            {showCustomTimeAdornment && (
+              <button
+                type="button"
+                onClick={openDatePicker}
+                className={`absolute inset-y-0 right-0 flex items-center pr-3 ${isDark ? 'text-slate-200' : 'text-slate-600'}`}
+                aria-label="Open Time"
+                tabIndex={-1}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4.5 w-4.5"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="12" x2="12" y2="7" />
+                  <line x1="12" y1="12" x2="16" y2="14" />
+                </svg>
+              </button>
+            )}
+
 
             {endAdornment && (
               <span className="absolute inset-y-0 right-0 flex items-center pr-3">
-                {endAdornment}
+                {typeof endAdornment === 'string' ? <Translated text={endAdornment} /> : endAdornment}
               </span>
             )}
           </div>
@@ -180,13 +318,17 @@ const RHFFormField: React.FC<RHFFormFieldProps> = ({
       <AnimatePresence>
         {error && (
           <motion.p
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mt-2 text-sm text-red-600 flex items-center"
+            initial={{ opacity: 0, y: -4, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto' }}
+            exit={{ opacity: 0, y: -4, height: 0 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className={`mt-2 text-xs font-semibold flex items-center gap-1.5 px-2.5 py-1.5 rounded-md leading-tight ${isDark
+                ? 'text-red-300 bg-red-950/50 border border-red-800/60'
+                : 'text-red-700 bg-red-50 border border-red-200'
+              }`}
           >
             <svg
-              className="w-4 h-4 mr-2 flex-shrink-0"
+              className="w-3.5 h-3.5 shrink-0"
               fill="currentColor"
               viewBox="0 0 20 20"
             >

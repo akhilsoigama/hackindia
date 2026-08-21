@@ -1,260 +1,334 @@
-import { useState } from 'react';
-import { FaUserGraduate, FaEnvelope, FaPhone, FaIdCard, FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { useMemo, useCallback } from 'react';
+import {
+  FaCalendarAlt,
+  FaUserGraduate,
+  FaMapMarkerAlt,
+  FaVenusMars,
+} from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import CommonDataList, { ModalField } from '../../../components/common/commanDataList';
+import { IStudent } from '../../../types/student';
 
-interface Student {
-  id: number;
-  name: string;
-  studentId: string;
-  department: string;
-  course: string;
-  year: string;
-  email: string;
-  phone: string;
-  status: string;
+interface StudentListProps {
+  students: IStudent[];
+  onEdit?: (student: IStudent) => void;
+  onDelete?: (id: number) => void;
+  onCreate?: () => void;
+  isLoading?: boolean;
 }
 
-const StudentList = () => {
-  const [students, setStudents] = useState<Student[]>([
-    {
-      id: 1,
-      name: 'Alice Johnson',
-      studentId: 'STU001',
-      department: 'Computer Science',
-      course: 'B.Tech',
-      year: '3rd',
-      email: 'alice.johnson@example.com',
-      phone: '+91 9876543211',
-      status: 'active',
-    },
-    {
-      id: 2,
-      name: 'Bob Williams',
-      studentId: 'STU002',
-      department: 'Mechanical Engineering',
-      course: 'B.E.',
-      year: '2nd',
-      email: 'bob.williams@example.com',
-      phone: '+91 9876509876',
-      status: 'inactive',
-    },
-  ]);
+const StudentList = ({
+  students,
+  onEdit,
+  onDelete,
+  onCreate,
+  isLoading = false,
+}: StudentListProps) => {
+  const navigate = useNavigate();
+  const formatDateOnly = useCallback((value: Date | string | undefined) => {
+    if (!value) return 'N/A';
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return 'N/A';
+    return date.toISOString().split('T')[0];
+  }, []);
 
-  const handleDelete = (id: number) => {
-    if (confirm('Are you sure you want to delete this student?')) {
-      setStudents(students.filter((s) => s.id !== id));
+  const handleEdit = useCallback((student: IStudent) => {
+    const originalStudent = students.find(s => s.id === student.id);
+    if (originalStudent) {
+      onEdit?.(originalStudent);
     }
-  };
+  }, [onEdit, students]);
+
+  const handleDelete = useCallback((id: number) => {
+    onDelete?.(id);
+  }, [onDelete]);
+
+  const handleCreate = useCallback(() => {
+    if (onCreate) onCreate();
+    else navigate('/dashboard/institute-management/student/new');
+  }, [onCreate, navigate]);
+
+ const columns = useMemo(
+  () => [
+    {
+      header: 'Student Name',
+      accessor: 'studentName' as keyof IStudent,
+      width: '15%',
+      render: (item: IStudent) => (
+        <span translate="yes" className="font-medium truncate wrap-break-word">
+          {item.studentName || 'N/A'}
+        </span>
+      ),
+    },
+    {
+      header: 'Email',
+      accessor: 'studentEmail' as keyof IStudent,
+      width: '20%',
+    },
+    {
+      header: 'GR Number',
+      accessor: 'studentGrNo' as keyof IStudent,
+      width: '10%',
+    },
+    {
+      header: 'Gender',
+      accessor: 'studentGender' as keyof IStudent,
+      width: '8%',
+    },
+    {
+      header: 'Student ID',
+      accessor: 'studentId' as keyof IStudent,
+      width: '8%',
+    },
+    {
+      header: 'Standard',
+      accessor: 'studentStd' as keyof IStudent,
+      width: '10%',
+    },
+    {
+      header: 'Mobile',
+      accessor: 'studentMobile' as keyof IStudent,
+      width: '12%',
+    },
+    {
+      header: 'Status',
+      accessor: 'isActive' as keyof IStudent,
+      width: '7%',
+    },
+    {
+      header: 'Admission Date',
+      accessor: 'studentAddmissionDate' as keyof IStudent,
+      sortable: true,
+      width: '10%',
+      render: (item: IStudent) =>
+        formatDateOnly(item.studentAddmissionDate),
+    },
+  ],
+  [formatDateOnly]
+);
+
+  const viewModalFields: ModalField<IStudent>[] = useMemo(() => [
+    {
+      label: 'Student Name',
+      key: 'studentName',
+      type: 'text' as const,
+      disabled: true,
+    },
+    {
+      label: 'Student ID',
+      key: 'studentId',
+      type: 'text' as const,
+      disabled: true,
+    },
+    {
+      label: 'Standard',
+      key: 'studentStd',
+      type: 'text' as const,
+      disabled: true,
+    },
+    {
+      label: 'GR Number',
+      key: 'studentGrNo',
+      type: 'text' as const,
+      disabled: true,
+    },
+    {
+      label: 'Gender',
+      key: 'studentGender',
+      type: 'custom' as const,
+      disabled: true,
+      render: (val) => (
+        <div className="inline-flex items-center gap-2 text-sm text-slate-600">
+          <FaVenusMars size={14} className="text-slate-500" />
+          <span>{typeof val === 'string' ? val : 'Not specified'}</span>
+        </div>
+      ),
+    },
+    {
+      label: 'Department',
+      key: 'department' as keyof IStudent,
+      type: 'custom' as const,
+      disabled: true,
+      render: (val) => (
+        <div className="text-sm text-slate-600">
+          {typeof val === 'object' && val !== null && 'departmentName' in val
+            ? String((val as { departmentName?: string }).departmentName ?? 'Not specified')
+            : 'Not specified'}
+        </div>
+      ),
+    },
+    {
+      label: 'Role',
+      key: 'role' as keyof IStudent,
+      type: 'custom' as const,
+      disabled: true,
+      render: (val) => (
+        <div className="text-sm text-slate-600">
+          {typeof val === 'object' && val !== null && 'roleName' in val
+            ? String((val as { roleName?: string }).roleName ?? 'Not specified')
+            : 'Not specified'}
+        </div>
+      ),
+    },
+    {
+      label: 'Email Address',
+      key: 'studentEmail',
+      type: 'text' as const,
+      disabled: true,
+    },
+    {
+      label: 'Mobile Number',
+      key: 'studentMobile',
+      type: 'text' as const,
+      disabled: true,
+    },
+    {
+      label: 'Date of Birth',
+      key: 'studentDob',
+      type: 'custom' as const,
+      disabled: true,
+      render: (val) => {
+        const formatDate = (dateString: string) => {
+          if (!dateString) return 'Not specified';
+          try {
+            return new Date(dateString).toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            });
+          } catch {
+            return dateString;
+          }
+        };
+
+        return (
+          <div className="flex items-center gap-2 text-sm text-slate-600">
+            <FaCalendarAlt size={14} className="text-slate-500" />
+            <span>{formatDate(typeof val === 'string' ? val : '')}</span>
+          </div>
+        );
+      },
+    },
+    {
+      label: 'Admission Date',
+      key: 'studentAddmissionDate',
+      type: 'custom' as const,
+      disabled: true,
+      render: (val) => {
+        return (
+          <div className="flex items-center gap-2 text-sm text-slate-600">
+            <FaCalendarAlt size={14} className="text-slate-500" />
+            <span>{formatDateOnly((val instanceof Date || typeof val === 'string') ? val : undefined)}</span>
+          </div>
+        );
+      },
+    },
+    {
+      label: 'Address',
+      key: 'studentAddress',
+      type: 'custom' as const,
+      disabled: true,
+      render: (val, item: IStudent) => (
+        <div className="text-sm text-slate-600">
+          <div className="mb-2 flex items-center gap-2 font-medium text-slate-700">
+            <FaMapMarkerAlt size={14} className="text-slate-500" />
+            <span>Address Information</span>
+          </div>
+          {typeof val === 'string' && val && (
+            <div className="mb-1 text-slate-500">{val}</div>
+          )}
+          {(item.studentCity || item.studentState || item.studentCountry || item.studentPincode) && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {item.studentCity && <span className="rounded bg-slate-200 px-2 py-1 text-xs text-slate-700">City: {item.studentCity}</span>}
+              {item.studentState && <span className="rounded bg-slate-200 px-2 py-1 text-xs text-slate-700">State: {item.studentState}</span>}
+              {item.studentCountry && <span className="rounded bg-slate-200 px-2 py-1 text-xs text-slate-700">Country: {item.studentCountry}</span>}
+              {item.studentPincode && <span className="rounded bg-slate-200 px-2 py-1 text-xs text-slate-700">Pin Code: {item.studentPincode}</span>}
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      label: 'Status',
+      key: 'isActive',
+      type: 'custom' as const,
+      disabled: true,
+      render: (val) => {
+        const active = Boolean(val);
+        return (
+          <div className={`inline-flex items-center rounded-md border px-3 py-1 text-sm font-semibold transition-all duration-300 ease-in-out ${active ? 'border-green-300/60 bg-green-100/70 text-green-700 shadow-sm shadow-green-200/40' : 'border-red-300/60 bg-red-100/70 text-red-700 shadow-sm shadow-red-200/40'}`}>
+            {active ? 'Active' : 'Inactive'}
+          </div>
+        );
+      },
+    },
+    {
+      label: 'Created Date',
+      key: 'createdAt',
+      type: 'custom' as const,
+      disabled: true,
+      render: (val) => {
+        const dateString = typeof val === 'string' ? val : '';
+        const formatted = dateString
+          ? new Date(dateString).toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })
+          : 'N/A';
+
+        return (
+          <div className="flex items-center gap-2 text-sm text-slate-600">
+            <FaCalendarAlt size={14} className="text-slate-500" />
+            <span>{formatted}</span>
+          </div>
+        );
+      },
+    },
+  ], [formatDateOnly]);
 
   return (
-    <motion.div
-      className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <motion.div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <motion.div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center">
-              <FaUserGraduate className="mr-2 sm:mr-3 text-blue-600 text-lg sm:text-xl" />
-              Student List
-            </h1>
-            <p className="text-gray-600 mt-2 text-sm sm:text-base">
-              View and manage all students in the system.
-            </p>
-          </motion.div>
-          <Link to="/dashboard/institute-management/students/create">
-            <motion.button
-              className="flex items-center px-3 py-2 sm:px-4 sm:py-2 bg-blue-600 text-white text-sm sm:text-base font-medium rounded-md shadow hover:bg-blue-700 transition-colors w-fit"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <FaPlus className="mr-1 sm:mr-2 text-sm sm:text-base" />
-              Add Student
-            </motion.button>
-          </Link>
-        </motion.div>
-
-        {/* Mobile: Card Layout */}
-        <motion.div className="block lg:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
-          {students.length === 0 ? (
-            <div className="text-center text-gray-500 p-6 bg-white rounded-lg shadow-md">
-              No students found.
-            </div>
-          ) : (
-            <AnimatePresence>
-              {students.map((s, index) => (
-                <motion.div
-                  layout
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
-                key={s.id}
-                className="mb-4 p-4 bg-white rounded-lg shadow-md border border-gray-200"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800">{s.name}</h3>
-                    <p className="text-sm text-gray-600 flex items-center">
-                      <FaIdCard className="mr-2 text-gray-400" /> {s.studentId}
-                    </p>
-                  </div>
-                  <div className="flex space-x-2">
-                    <motion.button
-                      className="text-blue-600 hover:text-blue-800 p-1"
-                      aria-label={`Edit ${s.name}`}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      <FaEdit className="text-lg" />
-                    </motion.button>
-                    <motion.button
-                      onClick={() => handleDelete(s.id)}
-                      className="text-red-600 hover:text-red-800 p-1"
-                      aria-label={`Delete ${s.name}`}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      <FaTrash className="text-lg" />
-                    </motion.button>
-                  </div>
-                </div>
-                <div className="mt-3 text-sm text-gray-600 space-y-2">
-                  <p><span className="font-medium">Department:</span> {s.department}</p>
-                  <p><span className="font-medium">Course:</span> {s.course}</p>
-                  <p><span className="font-medium">Year:</span> {s.year}</p>
-                  <p className="flex items-center">
-                    <FaEnvelope className="mr-2 text-gray-400" /> {s.email}
-                  </p>
-                  <p className="flex items-center">
-                    <FaPhone className="mr-2 text-gray-400" /> {s.phone}
-                  </p>
-                  <p>
-                    <span className="font-medium">Status:</span>{' '}
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs sm:text-sm font-semibold rounded-full ${
-                        s.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}
-                    >
-                      {s.status.charAt(0).toUpperCase() + s.status.slice(1)}
-                    </span>
-                  </p>
-                </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          )}
-        </motion.div>
-
-        {/* Desktop: Table Layout */}
-        <motion.div className="hidden lg:block bg-white shadow-md rounded-lg overflow-x-auto" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
-          <table className="min-w-full divide-y divide-gray-200 scrollbar-hide">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">
-                  Name
-                </th>
-                <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">
-                  Student ID
-                </th>
-                <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">
-                  Department
-                </th>
-                <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">
-                  Course
-                </th>
-                <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">
-                  Year
-                </th>
-                <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">
-                  Contact
-                </th>
-                <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">
-                  Status
-                </th>
-                <th className="px-4 py-3 sm:px-6 sm:py-4 text-center text-xs sm:text-sm font-semibold text-gray-700">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              <AnimatePresence>
-                {students.map((s, index) => (
-                  <motion.tr
-                    layout
-                    key={s.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0, x: -50 }}
-                    transition={{ duration: 0.3, delay: index * 0.05 }}
-                    className="hover:bg-gray-50">
-                  <td className="px-4 py-3 sm:px-6 sm:py-4 text-sm text-gray-800">{s.name}</td>
-                  <td className="px-4 py-3 sm:px-6 sm:py-4 text-sm text-gray-600 flex items-center">
-                    <FaIdCard className="mr-2 text-gray-400" /> {s.studentId}
-                  </td>
-                  <td className="px-4 py-3 sm:px-6 sm:py-4 text-sm text-gray-600">{s.department}</td>
-                  <td className="px-4 py-3 sm:px-6 sm:py-4 text-sm text-gray-600">{s.course}</td>
-                  <td className="px-4 py-3 sm:px-6 sm:py-4 text-sm text-gray-600">{s.year}</td>
-                  <td className="px-4 py-3 sm:px-6 sm:py-4 text-sm text-gray-600">
-                    <div className="flex flex-col">
-                      <span className="flex items-center">
-                        <FaEnvelope className="mr-2 text-gray-400" /> {s.email}
-                      </span>
-                      <span className="flex items-center mt-1">
-                        <FaPhone className="mr-2 text-gray-400" /> {s.phone}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 sm:px-6 sm:py-4 text-sm">
-                    <span
-                      className={`px-2 inline-flex text-xs sm:text-sm font-semibold rounded-full ${
-                        s.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}
-                    >
-                      {s.status.charAt(0).toUpperCase() + s.status.slice(1)}
-                    </span>
-                  </td>
-                  <td className="flex justify-center px-4 py-3 sm:px-6 sm:py-4 space-x-2">
-                    <motion.button
-                      className="text-blue-600 hover:text-blue-800 p-1"
-                      aria-label={`Edit ${s.name}`}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      <FaEdit className="text-lg" />
-                    </motion.button>
-                    <motion.button
-                      onClick={() => handleDelete(s.id)}
-                      className="text-red-600 hover:text-red-800 p-1"
-                      aria-label={`Delete ${s.name}`}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      <FaTrash className="text-lg" />
-                    </motion.button>
-                  </td>
-                  </motion.tr>
-                ))}
-              </AnimatePresence>
-              {students.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={8}
-                    className="px-4 py-3 sm:px-6 sm:py-4 text-center text-sm sm:text-base text-gray-500"
-                  >
-                    No students found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </motion.div>
-      </div>
-    </motion.div>
+    <CommonDataList<IStudent>
+      data={students}
+      title="Student Management"
+      subtitle="Manage student profiles, academic records, and enrollment status"
+      columns={columns}
+      onCreate={handleCreate}
+      onEdit={handleEdit}
+      onDelete={handleDelete}
+      viewModalFields={viewModalFields}
+      icon={<FaUserGraduate />}
+      createButtonText="Add New Student"
+      searchPlaceholder="Search students by name, ID, standard, or email..."
+      emptyMessage="No students found"
+      emptyDescription="Get started by adding your first student to the system"
+      enableSearch={true}
+      enableStatusFilter={true}
+      statusFilterKey="isActive"
+      customFilters={{
+        status: [
+          { value: 'all', label: 'All Students' },
+          { value: 'active', label: 'Active' },
+          { value: 'inactive', label: 'Inactive' },
+        ],
+        standard: [
+          { value: 'all', label: 'All Standards' },
+          { value: '1st', label: '1st Standard' },
+          { value: '2nd', label: '2nd Standard' },
+          { value: '3rd', label: '3rd Standard' },
+          { value: '4th', label: '4th Standard' },
+          { value: '5th', label: '5th Standard' },
+          { value: '6th', label: '6th Standard' },
+          { value: '7th', label: '7th Standard' },
+          { value: '8th', label: '8th Standard' },
+          { value: '9th', label: '9th Standard' },
+          { value: '10th', label: '10th Standard' },
+        ],
+      }}
+      isLoading={isLoading}
+    />
   );
 };
 
